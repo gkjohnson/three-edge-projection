@@ -11,7 +11,6 @@ const params = {
 	displayModel: 'color',
 	displayEdges: false,
 	displayProjection: true,
-	useBVH: true,
 	sortEdges: true,
 	rotate: () => {
 
@@ -59,20 +58,13 @@ async function init() {
 	const light = new THREE.DirectionalLight( 0xffffff, 2 );
 	light.position.set( 1, 2, 3 );
 	scene.add( light );
-	scene.add( new THREE.AmbientLight( 0xb0bec5, 0.5 ) );
+
+	const ambientLight = new THREE.AmbientLight( 0xb0bec5, 0.5 );
+	scene.add( ambientLight );
 
 	// load model
 	group = new THREE.Group();
 	scene.add( group );
-
-	window.addEventListener( 'resize', function () {
-
-		camera.aspect = window.innerWidth / window.innerHeight;
-		camera.updateProjectionMatrix();
-
-		renderer.setSize( window.innerWidth, window.innerHeight );
-
-	}, false );
 
 	const gltf = await new GLTFLoader()
 		.setMeshoptDecoder( MeshoptDecoder )
@@ -126,13 +118,13 @@ async function init() {
 	camera.position.setScalar( 3.5 );
 	camera.updateProjectionMatrix();
 
+	// controls
 	controls = new OrbitControls( camera, renderer.domElement );
 
 	gui = new GUI();
 	gui.add( params, 'displayModel', [ 'none', 'color', 'white' ] );
 	gui.add( params, 'displayEdges' );
 	gui.add( params, 'displayProjection' );
-	gui.add( params, 'useBVH' );
 	gui.add( params, 'sortEdges' );
 	gui.add( params, 'rotate' );
 	gui.add( params, 'regenerate' );
@@ -140,6 +132,15 @@ async function init() {
 	task = updateEdges();
 
 	render();
+
+	window.addEventListener( 'resize', function () {
+
+		camera.aspect = window.innerWidth / window.innerHeight;
+		camera.updateProjectionMatrix();
+
+		renderer.setSize( window.innerWidth, window.innerHeight );
+
+	}, false );
 
 }
 
@@ -180,6 +181,7 @@ function* updateEdges( runTime = 30 ) {
 
 	// generate the bvh for acceleration
 	timeStart = window.performance.now();
+
 	const bvh = new MeshBVH( mergedGeometry );
 	const bvhTime = window.performance.now() - timeStart;
 
@@ -213,7 +215,6 @@ function* updateEdges( runTime = 30 ) {
 
 	const geometry = result.value;
 	const trimTime = window.performance.now() - timeStart;
-
 
 	projection.geometry.dispose();
 	projection.geometry = geometry;
