@@ -1,0 +1,30 @@
+{
+  "name": "three-edge-projection",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Garrett Johnson <garrett.kjohnson@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gkjohnson/three-edge-projection.git"
+  },
+  "bugs": {
+    "url": "https://github.com/gkjohnson/three-edge-projection/issues"
+  },
+  "homepage": "https://github.com/gkjohnson/three-edge-projection#readme",
+  "peerDependencies": {
+    "three": "^0.155.0",
+    "three-mesh-bvh": "^0.6.0"
+  },
+  "devDependencies": {
+    "three": "^0.155.0",
+    "three-mesh-bvh": "^0.6.3"
+  },
+  "dependencies": {
+    "parcel": "^2.9.3"
+  }
+}
