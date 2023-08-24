@@ -2,7 +2,9 @@ import * as THREE from 'three';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { MeshBVH } from '..';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
+import { MeshBVH } from 'three-mesh-bvh';
 import {
 	generateEdges,
 	isLineAbovePlane,
@@ -14,9 +16,7 @@ import {
 	getProjectedOverlaps,
 	isYProjectedLineDegenerate,
 	compressEdgeOverlaps,
-} from './utils/edgeUtils.js';
-import { mergeBufferGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
+} from '..';
 
 const params = {
 	displayModel: 'color',
@@ -183,7 +183,7 @@ function* updateEdges( runTime = 30 ) {
 		}
 
 	} );
-	const mergedGeometry = mergeBufferGeometries( geometries, false );
+	const mergedGeometry = mergeGeometries( geometries, false );
 	const mergeTime = window.performance.now() - timeStart;
 
 	yield;
