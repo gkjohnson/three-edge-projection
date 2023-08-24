@@ -4,8 +4,28 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "parcel serve ./example/*.html --dist-dir ./example/dev-bundle/ --no-hmr",
+    "build-examples": "cd example && parcel build ./*.html --dist-dir ./bundle/ --public-url . --no-cache --no-content-hash",
+    "lint": "eslint \"./src/**/*.{js,ts}\" \"./test/**/*.{js,ts}\" \"./example/*.js\" && tsc --noEmit",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "files": [
+    "src/*"
+  ],
+  "keywords": [
+    "graphics",
+    "tree",
+    "bounds",
+    "threejs",
+    "three-js",
+    "bounds-hierarchy",
+    "performance",
+    "geometry",
+    "mesh",
+    "acceleration",
+    "projection",
+    "edges"
+  ],
   "author": "Garrett Johnson <garrett.kjohnson@gmail.com>",
   "license": "MIT",
   "repository": {
@@ -22,9 +42,12 @@
   },
   "devDependencies": {
     "three": "^0.155.0",
-    "three-mesh-bvh": "^0.6.3"
-  },
-  "dependencies": {
+    "three-mesh-bvh": "^0.6.3",
+		"@typescript-eslint/eslint-plugin": "^4.33.0",
+    "@typescript-eslint/parser": "^4.33.0",
+    "eslint": "^7.32.0",
+    "eslint-config-mdcs": "^5.0.0",
+    "eslint-plugin-jest": "^23.20.0",
     "parcel": "^2.9.3"
   }
 }
