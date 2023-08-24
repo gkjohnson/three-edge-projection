@@ -5,18 +5,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { MeshBVH } from 'three-mesh-bvh';
-import {
-	generateEdges,
-	isLineAbovePlane,
-	isYProjectedTriangleDegenerate,
-	isLineTriangleEdge,
-	trimToBeneathTriPlane,
-	edgesToGeometry,
-	overlapsToLines,
-	getProjectedOverlaps,
-	isYProjectedLineDegenerate,
-	compressEdgeOverlaps,
-} from '..';
+import { ProjectionGenerator } from '..';
 
 const params = {
 	displayModel: 'color',
@@ -198,163 +187,42 @@ function* updateEdges( runTime = 30 ) {
 
 	// generate the candidate edges
 	timeStart = window.performance.now();
-	const edges = generateEdges( mergedGeometry, new THREE.Vector3( 0, 1, 0 ), 50 );
 
-	if ( params.sortEdges ) {
+	const generator = new ProjectionGenerator();
+	generator.sortEdges = params.sortEdges;
 
-		edges.sort( ( a, b ) => {
+	const task = generator.generate( bvh );
+	let result;
+	let taskTime = window.performance.now();
+	while ( result = task.next() ) {
 
-			return Math.min( a.start.y, a.end.y ) - Math.min( b.start.y, b.end.y );
+		if ( result.done ) {
 
-		} );
-
-	}
-
-	const edgeGenerateTime = window.performance.now() - timeStart;
-
-	yield;
-
-	scene.add( projection );
-
-	// trim the candidate edges
-	const finalEdges = [];
-	const tempLine = new THREE.Line3();
-	const tempRay = new THREE.Ray();
-	const tempVec = new THREE.Vector3();
-
-	timeStart = window.performance.now();
-	let trimTime = 0;
-	for ( let i = 0, l = edges.length; i < l; i ++ ) {
-
-		const line = edges[ i ];
-		if ( isYProjectedLineDegenerate( line ) ) {
-
-			continue;
+			break;
 
 		}
 
-		const lowestLineY = Math.min( line.start.y, line.end.y );
-		const overlaps = [];
-		bvh.shapecast( {
+		if ( window.performance.now() - taskTime > runTime ) {
 
-			intersectsBounds: box => {
-
-				if ( ! params.useBVH ) {
-
-					return true;
-
-				}
-
-				// check if the box bounds are above the lowest line point
-				box.min.y = Math.min( lowestLineY, box.min.y );
-				tempRay.origin.copy( line.start );
-				line.delta( tempRay.direction ).normalize();
-
-				if ( box.containsPoint( tempRay.origin ) ) {
-
-					return true;
-
-				}
-
-				if ( tempRay.intersectBox( box, tempVec ) ) {
-
-					return tempRay.origin.distanceToSquared( tempVec ) < line.distanceSq();
-
-				}
-
-				return false;
-
-			},
-
-			intersectsTriangle: tri => {
-
-				// skip the triangle if it is completely below the line
-				const highestTriangleY = Math.max( tri.a.y, tri.b.y, tri.c.y );
-
-				if ( highestTriangleY < lowestLineY ) {
-
-					return false;
-
-				}
-
-				// if the projected triangle is just a line then don't check it
-				if ( isYProjectedTriangleDegenerate( tri ) ) {
-
-					return false;
-
-				}
-
-				// if this line lies on a triangle edge then don't check it
-				if ( isLineTriangleEdge( tri, line ) ) {
-
-					return false;
-
-				}
-
-				trimToBeneathTriPlane( tri, line, tempLine );
-
-				if ( isLineAbovePlane( tri.plane, tempLine ) ) {
-
-					return false;
-
-				}
-
-				if ( tempLine.distance() < 1e-10 ) {
-
-					return false;
-
-				}
-
-				// compress the edge overlaps so we can easily tell if the whole edge is hidden already
-				// and exit early
-				if ( getProjectedOverlaps( tri, line, overlaps ) ) {
-
-					compressEdgeOverlaps( overlaps );
-
-				}
-
-				// if we're hiding the edge entirely now then skip further checks
-				if ( overlaps.length !== 0 ) {
-
-					const [ d0, d1 ] = overlaps[ overlaps.length - 1 ];
-					return d0 === 0.0 && d1 === 1.0;
-
-				}
-
-				return false;
-
-			},
-
-		} );
-
-		overlapsToLines( line, overlaps, finalEdges );
-
-		const delta = window.performance.now() - timeStart;
-		if ( delta > runTime ) {
-
-			outputContainer.innerText = `processing: ${ ( 100 * i / edges.length ).toFixed( 2 ) }%`;
-			trimTime += delta;
-
-			projection.geometry.dispose();
-			projection.geometry = edgesToGeometry( finalEdges, 0 );
 			yield;
-			timeStart = window.performance.now();
+			taskTime = window.performance.now();
 
 		}
 
 	}
+
+	const geometry = result.value;
+	const trimTime = window.performance.now() - timeStart;
+
 
 	projection.geometry.dispose();
-	projection.geometry = edgesToGeometry( finalEdges, 0 );
-	trimTime += window.performance.now() - timeStart;
+	projection.geometry = geometry;
+	scene.add( projection );
 
 	outputContainer.innerText =
 		`merge geometry  : ${ mergeTime.toFixed( 2 ) }ms\n` +
 		`bvh generation  : ${ bvhTime.toFixed( 2 ) }ms\n` +
-		`edge generation : ${ edgeGenerateTime.toFixed( 2 ) }ms\n` +
-		`edge trimming   : ${ trimTime.toFixed( 2 ) }ms\n\n` +
-		`total time      : ${ ( mergeTime + bvhTime + edgeGenerateTime + trimTime ).toFixed( 2 ) }ms\n` +
-		`total edges     : ${ finalEdges.length } edges`;
+		`edge trimming   : ${ trimTime.toFixed( 2 ) }ms\n\n`;
 
 }
 
