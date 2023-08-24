@@ -57,21 +57,20 @@ async function init() {
 	const bgColor = 0xeeeeee;
 
 	// renderer setup
-	renderer = new THREE.WebGLRenderer( { antialias: true } );
+	renderer = new THREE.WebGLRenderer();
 	renderer.setPixelRatio( window.devicePixelRatio );
 	renderer.setSize( window.innerWidth, window.innerHeight );
 	renderer.setClearColor( bgColor, 1 );
-	renderer.outputEncoding = THREE.sRGBEncoding;
 	document.body.appendChild( renderer.domElement );
 
 	// scene setup
 	scene = new THREE.Scene();
 
 	// lights
-	const light = new THREE.DirectionalLight( 0xffffff, 1 );
+	const light = new THREE.DirectionalLight( 0xffffff, 2 );
 	light.position.set( 1, 2, 3 );
 	scene.add( light );
-	scene.add( new THREE.AmbientLight( 0xb0bec5, 0.25 ) );
+	scene.add( new THREE.AmbientLight( 0xb0bec5, 0.5 ) );
 
 	// load model
 	group = new THREE.Group();
@@ -86,7 +85,9 @@ async function init() {
 
 	}, false );
 
-	const gltf = await new GLTFLoader().setMeshoptDecoder( MeshoptDecoder ).loadAsync( 'https://raw.githubusercontent.com/gkjohnson/3d-demo-data/main/models/nasa-m2020/Perseverance.glb' );
+	const gltf = await new GLTFLoader()
+		.setMeshoptDecoder( MeshoptDecoder )
+		.loadAsync( 'https://raw.githubusercontent.com/gkjohnson/3d-demo-data/main/models/nasa-m2020/Perseverance.glb' );
 	model = gltf.scene;
 
 	const whiteMaterial = new THREE.MeshStandardMaterial();
