@@ -27,7 +27,7 @@ export class ProjectionGenerator {
 
 	*generate( bvh, options = {} ) {
 
-		const { progressCallback } = options;
+		const { onProgress } = options;
 
 		if ( bvh instanceof BufferGeometry ) {
 
@@ -48,7 +48,6 @@ export class ProjectionGenerator {
 		}
 
 		yield;
-
 
 		// trim the candidate edges
 		const finalEdges = [];
@@ -155,10 +154,10 @@ export class ProjectionGenerator {
 			// TODO: is this best before or after in terms of time?
 			overlapsToLines( line, overlaps, finalEdges );
 
-			if ( progressCallback ) {
+			if ( onProgress ) {
 
 				const progress = i / edges.length;
-				progressCallback( progress );
+				onProgress( progress );
 
 			}
 
