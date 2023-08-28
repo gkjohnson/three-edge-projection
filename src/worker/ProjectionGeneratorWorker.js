@@ -72,6 +72,13 @@ export class ProjectionGeneratorWorker {
 			};
 
 			// TODO: post and transfer
+			worker.postMessage( {
+				options: {
+					...options,
+					onProgress: null,
+					includedProgressCallback: Boolean( options.onProgress ),
+				},
+			} );
 
 		} );
 
