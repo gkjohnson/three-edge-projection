@@ -147,7 +147,6 @@ async function init() {
 function* updateEdges( runTime = 30 ) {
 
 	outputContainer.innerText = 'processing: --';
-	scene.remove( projection );
 
 	// transform and merge geometries to project into a single model
 	let timeStart = window.performance.now();
@@ -193,7 +192,27 @@ function* updateEdges( runTime = 30 ) {
 	const generator = new ProjectionGenerator();
 	generator.sortEdges = params.sortEdges;
 
-	const task = generator.generate( bvh );
+	let doUpdate = true;
+	const task = generator.generate( bvh, {
+
+		onProgress: ( p, data ) => {
+
+			if ( doUpdate ) {
+
+				doUpdate = false;
+				outputContainer.innerText = `processing: ${ parseFloat( ( p * 100 ).toFixed( 2 ) ) }%`;
+				if ( params.displayProjection ) {
+
+					projection.geometry.dispose();
+					projection.geometry = data.getLineGeometry();
+
+				}
+
+			}
+
+		},
+
+	} );
 	let result;
 	let taskTime = window.performance.now();
 	while ( result = task.next() ) {
@@ -207,6 +226,7 @@ function* updateEdges( runTime = 30 ) {
 		if ( window.performance.now() - taskTime > runTime ) {
 
 			yield;
+			doUpdate = true;
 			taskTime = window.performance.now();
 
 		}
@@ -218,8 +238,6 @@ function* updateEdges( runTime = 30 ) {
 
 	projection.geometry.dispose();
 	projection.geometry = geometry;
-	scene.add( projection );
-
 	outputContainer.innerText =
 		`merge geometry  : ${ mergeTime.toFixed( 2 ) }ms\n` +
 		`bvh generation  : ${ bvhTime.toFixed( 2 ) }ms\n` +

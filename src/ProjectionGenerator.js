@@ -17,6 +17,22 @@ import {
 	compressEdgeOverlaps,
 } from '..';
 
+class EdgeSet {
+
+	constructor() {
+
+		this.edges = [];
+
+	}
+
+	getLineGeometry( y = 0 ) {
+
+		return edgesToGeometry( this.edges, y );
+
+	}
+
+}
+
 export class ProjectionGenerator {
 
 	constructor() {
@@ -50,7 +66,7 @@ export class ProjectionGenerator {
 		yield;
 
 		// trim the candidate edges
-		const finalEdges = [];
+		const finalEdges = new EdgeSet();
 		const tempLine = new Line3();
 		const tempRay = new Ray();
 		const tempVec = new Vector3();
@@ -151,13 +167,12 @@ export class ProjectionGenerator {
 
 			} );
 
-			// TODO: is this best before or after in terms of time?
-			overlapsToLines( line, overlaps, finalEdges );
+			overlapsToLines( line, overlaps, finalEdges.edges );
 
 			if ( onProgress ) {
 
 				const progress = i / edges.length;
-				onProgress( progress );
+				onProgress( progress, finalEdges );
 
 			}
 
@@ -165,7 +180,7 @@ export class ProjectionGenerator {
 
 		}
 
-		return edgesToGeometry( finalEdges, 0 );
+		return finalEdges.getLineGeometry( 0 );
 
 	}
 
