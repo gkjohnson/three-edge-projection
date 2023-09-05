@@ -35,7 +35,6 @@ onmessage = function ( { data } ) {
 		generator.sortEdges = options.sortEdges ?? generator.sortEdges;
 
 		const task = generator.generate( bvh, {
-			iterationTime: Infinity,
 			onProgress: onProgressCallback,
 		} );
 		let result;

@@ -173,18 +173,18 @@ export class ProjectionGenerator {
 
 			overlapsToLines( line, overlaps, finalEdges.edges );
 
-			if ( onProgress ) {
-
-				const progress = i / edges.length;
-				onProgress( progress, finalEdges );
-
-			}
-
 			const delta = performance.now() - time;
 			if ( delta > iterationTime ) {
 
-				time = performance.now();
+				if ( onProgress ) {
+
+					const progress = i / edges.length;
+					onProgress( progress, finalEdges );
+
+				}
+
 				yield;
+				time = performance.now();
 
 			}
 

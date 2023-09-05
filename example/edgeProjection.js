@@ -12,7 +12,7 @@ const params = {
 	displayEdges: false,
 	displayProjection: true,
 	sortEdges: true,
-	useWorker: true,
+	useWorker: false,
 	rotate: () => {
 
 		group.quaternion.random();
@@ -149,7 +149,7 @@ async function init() {
 
 }
 
-function* updateEdges( runTime = 30 ) {
+function* updateEdges( runTime = 10 ) {
 
 	outputContainer.innerText = 'processing: --';
 
@@ -192,24 +192,19 @@ function* updateEdges( runTime = 30 ) {
 		const generator = new ProjectionGenerator();
 		generator.sortEdges = params.sortEdges;
 
-		let doUpdate = true;
 		const task = generator.generate( mergedGeometry, {
 
 			iterationTime: runTime,
 			onProgress: ( p, data ) => {
 
-				if ( doUpdate ) {
+				outputContainer.innerText = `processing: ${ parseFloat( ( p * 100 ).toFixed( 2 ) ) }%`;
+				if ( params.displayProjection ) {
 
-					doUpdate = false;
-					outputContainer.innerText = `processing: ${ parseFloat( ( p * 100 ).toFixed( 2 ) ) }%`;
-					if ( params.displayProjection ) {
-
-						projection.geometry.dispose();
-						projection.geometry = data.getLineGeometry();
-
-					}
+					projection.geometry.dispose();
+					projection.geometry = data.getLineGeometry();
 
 				}
+
 
 			},
 
@@ -225,8 +220,6 @@ function* updateEdges( runTime = 30 ) {
 			}
 
 			yield;
-			doUpdate = true;
-
 
 		}
 
