@@ -38,15 +38,14 @@ export class ProjectionGenerator {
 	constructor() {
 
 		this.sortEdges = true;
+		this.iterationTime = 10;
 
 	}
 
 	*generate( bvh, options = {} ) {
 
-		const {
-			iterationTime = 10,
-			onProgress,
-		} = options;
+		const { onProgress } = options;
+		const { sortEdges, iterationTime } = this;
 
 		if ( bvh instanceof BufferGeometry ) {
 
@@ -56,7 +55,7 @@ export class ProjectionGenerator {
 
 		const geometry = bvh.geometry;
 		const edges = generateEdges( geometry, new Vector3( 0, 1, 0 ), 50 );
-		if ( this.sortEdges ) {
+		if ( sortEdges ) {
 
 			edges.sort( ( a, b ) => {
 

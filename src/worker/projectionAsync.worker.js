@@ -37,15 +37,11 @@ onmessage = function ( { data } ) {
 		const task = generator.generate( bvh, {
 			onProgress: onProgressCallback,
 		} );
-		let result;
 
-		while ( result = task.next() ) {
+		let result = task.next();
+		while ( ! result.done ) {
 
-			if ( result.done ) {
-
-				break;
-
-			}
+			result = task.next();
 
 		}
 

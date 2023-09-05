@@ -191,10 +191,10 @@ function* updateEdges( runTime = 10 ) {
 
 		const generator = new ProjectionGenerator();
 		generator.sortEdges = params.sortEdges;
+		generator.iterationTime = runTime;
 
 		const task = generator.generate( mergedGeometry, {
 
-			iterationTime: runTime,
 			onProgress: ( p, data ) => {
 
 				outputContainer.innerText = `processing: ${ parseFloat( ( p * 100 ).toFixed( 2 ) ) }%`;
@@ -210,15 +210,10 @@ function* updateEdges( runTime = 10 ) {
 
 		} );
 
-		let result;
-		while ( result = task.next() ) {
+		let result = task.next();
+		while ( ! result.done ) {
 
-			if ( result.done ) {
-
-				break;
-
-			}
-
+			result = task.next();
 			yield;
 
 		}
