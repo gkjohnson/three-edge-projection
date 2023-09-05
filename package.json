@@ -42,7 +42,7 @@
   },
   "devDependencies": {
     "three": "^0.155.0",
-    "three-mesh-bvh": "^0.6.3",
+    "three-mesh-bvh": "^0.6.6",
 		"@typescript-eslint/eslint-plugin": "^4.33.0",
     "@typescript-eslint/parser": "^4.33.0",
     "eslint": "^7.32.0",
