@@ -1,3 +1,5 @@
+import { BufferAttribute, BufferGeometry } from 'three';
+
 const NAME = 'ProjectionGeneratorWorker';
 export class ProjectionGeneratorWorker {
 
@@ -57,10 +59,11 @@ export class ProjectionGeneratorWorker {
 					reject( new Error( data.error ) );
 					worker.onmessage = null;
 
-				} else if ( data.serialized ) {
+				} else if ( data.result ) {
 
-
-					resolve(); // TODO
+					const geometry = new BufferGeometry();
+					geometry.setAttribute( 'position', new BufferAttribute( data.result, 3, false ) );
+					resolve( geometry );
 					worker.onmessage = null;
 
 				} else if ( options.onProgress ) {
@@ -71,14 +74,24 @@ export class ProjectionGeneratorWorker {
 
 			};
 
-			// TODO: post and transfer
+			const index = geometry.index ? geometry.index.array.slice() : null;
+			const position = geometry.attributes.position.array.slice();
+			const transfer = [ position.buffer ];
+			if ( index ) {
+
+				transfer.push( index.buffer );
+
+			}
+
 			worker.postMessage( {
+				index,
+				position,
 				options: {
 					...options,
 					onProgress: null,
 					includedProgressCallback: Boolean( options.onProgress ),
 				},
-			} );
+			}, transfer );
 
 		} );
 

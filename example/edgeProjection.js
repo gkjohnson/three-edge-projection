@@ -4,14 +4,15 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
-import { MeshBVH } from 'three-mesh-bvh';
 import { ProjectionGenerator } from '..';
+import { ProjectionGeneratorWorker } from '../src/worker/ProjectionGeneratorWorker.js';
 
 const params = {
 	displayModel: 'color',
 	displayEdges: false,
 	displayProjection: true,
 	sortEdges: true,
+	useWorker: true,
 	rotate: () => {
 
 		group.quaternion.random();
@@ -34,6 +35,7 @@ const params = {
 let renderer, camera, scene, gui, controls;
 let lines, model, projection, group, whiteModel;
 let outputContainer;
+let worker;
 let task = null;
 
 init();
@@ -126,8 +128,11 @@ async function init() {
 	gui.add( params, 'displayEdges' );
 	gui.add( params, 'displayProjection' );
 	gui.add( params, 'sortEdges' );
+	gui.add( params, 'useWorker' );
 	gui.add( params, 'rotate' );
 	gui.add( params, 'regenerate' );
+
+	worker = new ProjectionGeneratorWorker();
 
 	task = updateEdges();
 
@@ -178,69 +183,86 @@ function* updateEdges( runTime = 30 ) {
 
 	yield;
 
-	// generate the bvh for acceleration
-	timeStart = window.performance.now();
-
-	const bvh = new MeshBVH( mergedGeometry );
-	const bvhTime = window.performance.now() - timeStart;
-
-	yield;
-
 	// generate the candidate edges
 	timeStart = window.performance.now();
 
-	const generator = new ProjectionGenerator();
-	generator.sortEdges = params.sortEdges;
+	let geometry = null;
+	if ( ! params.useWorker ) {
 
-	let doUpdate = true;
-	const task = generator.generate( bvh, {
+		const generator = new ProjectionGenerator();
+		generator.sortEdges = params.sortEdges;
 
-		onProgress: ( p, data ) => {
+		let doUpdate = true;
+		const task = generator.generate( mergedGeometry, {
 
-			if ( doUpdate ) {
+			iterationTime: runTime,
+			onProgress: ( p, data ) => {
 
-				doUpdate = false;
-				outputContainer.innerText = `processing: ${ parseFloat( ( p * 100 ).toFixed( 2 ) ) }%`;
-				if ( params.displayProjection ) {
+				if ( doUpdate ) {
 
-					projection.geometry.dispose();
-					projection.geometry = data.getLineGeometry();
+					doUpdate = false;
+					outputContainer.innerText = `processing: ${ parseFloat( ( p * 100 ).toFixed( 2 ) ) }%`;
+					if ( params.displayProjection ) {
+
+						projection.geometry.dispose();
+						projection.geometry = data.getLineGeometry();
+
+					}
 
 				}
 
+			},
+
+		} );
+
+		let result;
+		while ( result = task.next() ) {
+
+			if ( result.done ) {
+
+				break;
+
 			}
-
-		},
-
-	} );
-	let result;
-	let taskTime = window.performance.now();
-	while ( result = task.next() ) {
-
-		if ( result.done ) {
-
-			break;
-
-		}
-
-		if ( window.performance.now() - taskTime > runTime ) {
 
 			yield;
 			doUpdate = true;
-			taskTime = window.performance.now();
+
+
+		}
+
+		geometry = result.value;
+
+	} else {
+
+		worker
+			.generate( mergedGeometry, {
+				sortEdges: params.sortEdges,
+				onProgress: p => {
+
+					outputContainer.innerText = `processing: ${ parseFloat( ( p * 100 ).toFixed( 2 ) ) }%`;
+
+				},
+			} )
+			.then( result => {
+
+				geometry = result;
+
+			} );
+
+		while ( geometry === null ) {
+
+			yield;
 
 		}
 
 	}
 
-	const geometry = result.value;
 	const trimTime = window.performance.now() - timeStart;
 
 	projection.geometry.dispose();
 	projection.geometry = geometry;
 	outputContainer.innerText =
 		`merge geometry  : ${ mergeTime.toFixed( 2 ) }ms\n` +
-		`bvh generation  : ${ bvhTime.toFixed( 2 ) }ms\n` +
 		`edge trimming   : ${ trimTime.toFixed( 2 ) }ms\n\n`;
 
 }

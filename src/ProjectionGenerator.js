@@ -43,7 +43,10 @@ export class ProjectionGenerator {
 
 	*generate( bvh, options = {} ) {
 
-		const { onProgress } = options;
+		const {
+			iterationTime = 10,
+			onProgress,
+		} = options;
 
 		if ( bvh instanceof BufferGeometry ) {
 
@@ -70,6 +73,7 @@ export class ProjectionGenerator {
 		const tempLine = new Line3();
 		const tempRay = new Ray();
 		const tempVec = new Vector3();
+		let time = performance.now();
 		for ( let i = 0, l = edges.length; i < l; i ++ ) {
 
 			const line = edges[ i ];
@@ -176,7 +180,13 @@ export class ProjectionGenerator {
 
 			}
 
-			yield;
+			const delta = performance.now() - time;
+			if ( delta > iterationTime ) {
+
+				time = performance.now();
+				yield;
+
+			}
 
 		}
 

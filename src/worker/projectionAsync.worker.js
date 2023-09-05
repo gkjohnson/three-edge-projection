@@ -1,4 +1,5 @@
-import { MeshBVH } from '../core/MeshBVH.js';
+import { BufferAttribute, BufferGeometry } from 'three';
+import { MeshBVH } from 'three-mesh-bvh';
 import { ProjectionGenerator } from '../ProjectionGenerator.js';
 
 onmessage = function ( { data } ) {
@@ -24,13 +25,21 @@ onmessage = function ( { data } ) {
 
 	try {
 
-		const { geometry, options } = data;
+		const { index, position, options } = data;
+		const geometry = new BufferGeometry();
+		geometry.setIndex( new BufferAttribute( index, 1, false ) );
+		geometry.setAttribute( 'position', new BufferAttribute( position, 3, false ) );
+
 		const bvh = new MeshBVH( geometry );
 		const generator = new ProjectionGenerator();
 		generator.sortEdges = options.sortEdges ?? generator.sortEdges;
 
-		const task = generator.generate( bvh, { onProgress: onProgressCallback } );
+		const task = generator.generate( bvh, {
+			iterationTime: Infinity,
+			onProgress: onProgressCallback,
+		} );
 		let result;
+
 		while ( result = task.next() ) {
 
 			if ( result.done ) {
@@ -41,15 +50,14 @@ onmessage = function ( { data } ) {
 
 		}
 
-		// TODO: serialize geometry
-
+		const resultLines = result.value.attributes.position.array;
 		postMessage( {
 
-			result: result.value,
+			result: resultLines,
 			error: null,
 			progress: 1,
 
-		} );
+		}, [ resultLines.buffer ] );
 
 	} catch ( error ) {
 
