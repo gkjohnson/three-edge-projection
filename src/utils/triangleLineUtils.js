@@ -30,6 +30,7 @@ export function isYProjectedTriangleDegenerate( tri ) {
 }
 
 // Is the provided line exactly an edge on the triangle
+// TODO: this potentially seems problematic?
 export function isLineTriangleEdge( tri, line ) {
 
 	// if this is the same line as on the triangle

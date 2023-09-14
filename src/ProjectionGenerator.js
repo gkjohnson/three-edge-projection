@@ -17,6 +17,12 @@ import { isLineAbovePlane } from './utils/planeUtils.js';
 import { trimToBeneathTriPlane } from './utils/trimBeneathTriPlane.js';
 import { getProjectedOverlaps } from './utils/getProjectedOverlaps.js';
 
+// these shared variables are not used across "yield" boundaries in the
+// generator so there's no risk of overwriting another tasks data
+const _beneathLine = /* @__PURE__ */ new Line3();
+const _ray = /* @__PURE__ */ new Ray();
+const _vec = /* @__PURE__ */ new Vector3();
+
 class EdgeSet {
 
 	constructor() {
@@ -121,9 +127,6 @@ export class ProjectionGenerator {
 
 		// trim the candidate edges
 		const finalEdges = new EdgeSet();
-		const tempLine = new Line3();
-		const tempRay = new Ray();
-		const tempVec = new Vector3();
 		let time = performance.now();
 		for ( let i = 0, l = edges.length; i < l; i ++ ) {
 
@@ -140,20 +143,25 @@ export class ProjectionGenerator {
 
 				intersectsBounds: box => {
 
-					// check if the box bounds are above the lowest line point
+					// expand the bounding box to the bottom height of the line
 					box.min.y = Math.min( lowestLineY, box.min.y );
-					tempRay.origin.copy( line.start );
-					line.delta( tempRay.direction ).normalize();
 
-					if ( box.containsPoint( tempRay.origin ) ) {
+					// get the line as a ray
+					const { origin, direction } = _ray;
+					origin.copy( line.start );
+					line.delta( direction ).normalize();
+
+					// if the ray is inside the box then we intersect it
+					if ( box.containsPoint( origin ) ) {
 
 						return true;
 
 					}
 
-					if ( tempRay.intersectBox( box, tempVec ) ) {
+					// check if the line segment intersects the box
+					if ( _ray.intersectBox( box, _vec ) ) {
 
-						return tempRay.origin.distanceToSquared( tempVec ) < line.distanceSq();
+						return origin.distanceToSquared( _vec ) < line.distanceSq();
 
 					}
 
@@ -165,7 +173,6 @@ export class ProjectionGenerator {
 
 					// skip the triangle if it is completely below the line
 					const highestTriangleY = Math.max( tri.a.y, tri.b.y, tri.c.y );
-
 					if ( highestTriangleY < lowestLineY ) {
 
 						return false;
@@ -180,21 +187,23 @@ export class ProjectionGenerator {
 					}
 
 					// if this line lies on a triangle edge then don't check it
+					// TODO: do we need this?
 					if ( isLineTriangleEdge( tri, line ) ) {
 
 						return false;
 
 					}
 
-					trimToBeneathTriPlane( tri, line, tempLine );
+					// TODO: what's this doing?
+					trimToBeneathTriPlane( tri, line, _beneathLine );
 
-					if ( isLineAbovePlane( tri.plane, tempLine ) ) {
+					if ( isLineAbovePlane( tri.plane, _beneathLine ) ) {
 
 						return false;
 
 					}
 
-					if ( tempLine.distance() < 1e-10 ) {
+					if ( _beneathLine.distance() < 1e-10 ) {
 
 						return false;
 
@@ -222,6 +231,7 @@ export class ProjectionGenerator {
 
 			} );
 
+			// convert the overlap points to proper lines
 			overlapsToLines( line, overlaps, finalEdges.edges );
 
 			const delta = performance.now() - time;
