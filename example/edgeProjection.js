@@ -57,7 +57,7 @@ async function init() {
 	scene = new THREE.Scene();
 
 	// lights
-	const light = new THREE.DirectionalLight( 0xffffff, 2 );
+	const light = new THREE.DirectionalLight( 0xffffff, 3.5 );
 	light.position.set( 1, 2, 3 );
 	scene.add( light );
 
