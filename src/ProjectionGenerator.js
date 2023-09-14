@@ -37,7 +37,34 @@ export class ProjectionGenerator {
 	constructor() {
 
 		this.sortEdges = true;
-		this.iterationTime = 10;
+		this.iterationTime = 30;
+
+	}
+
+	generateAsync( ...args ) {
+
+		return new Promise( resolve => {
+
+			const task = this.generate( ...args );
+			run();
+
+			function run() {
+
+				const result = task.next();
+				if ( result.done ) {
+
+					resolve( result.value );
+
+				} else {
+
+					requestAnimationFrame( run );
+
+				}
+
+			}
+
+
+		} );
 
 	}
 

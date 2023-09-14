@@ -149,7 +149,7 @@ async function init() {
 
 }
 
-function* updateEdges( runTime = 10 ) {
+function* updateEdges( runTime = 30 ) {
 
 	outputContainer.innerText = 'processing: --';
 
