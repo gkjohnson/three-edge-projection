@@ -20,9 +20,11 @@ export function getPlaneYAtPoint( plane, point, target = null ) {
 // returns whether the given line is above the given triangle plane
 export function isLineAbovePlane( plane, line ) {
 
-	_v0.lerpVectors( line.start, line.end, 0.5 );
-	getPlaneYAtPoint( plane, _v0, _v1 );
+	const linePoint = _v0;
+	const planePoint = _v1;
+	linePoint.lerpVectors( line.start, line.end, 0.5 );
+	getPlaneYAtPoint( plane, linePoint, planePoint );
 
-	return _v1.y < _v0.y;
+	return planePoint.y < linePoint.y;
 
 }

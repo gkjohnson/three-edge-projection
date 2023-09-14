@@ -2,21 +2,20 @@ import { Vector3 } from 'three';
 import { getPlaneYAtPoint } from './planeUtils.js';
 import { isYProjectedTriangleDegenerate } from './triangleLineUtils.js';
 
+const EPSILON = 1e-16;
 const _lineDirection = /* @__PURE__ */ new Vector3();
 const _planeHit = /* @__PURE__ */ new Vector3();
-const _centerPoint = /* @__PURE__ */ new Vector3();
 const _planePoint = /* @__PURE__ */ new Vector3();
 export function trimToBeneathTriPlane( tri, line, lineTarget ) {
+
+	const { plane } = tri;
+	lineTarget.copy( line );
 
 	if ( tri.needsUpdate ) {
 
 		tri.update();
 
 	}
-
-	lineTarget.copy( line );
-
-	const { plane } = tri;
 
 	// if the triangle is insignificant then skip it
 	if ( isYProjectedTriangleDegenerate( tri ) ) {
@@ -28,8 +27,7 @@ export function trimToBeneathTriPlane( tri, line, lineTarget ) {
 	// if the line and plane are coplanar then return that we can't trim
 	line.delta( _lineDirection );
 
-	// TODO: this should probably use some kind of EPS
-	const areCoplanar = plane.normal.dot( _lineDirection ) === 0.0;
+	const areCoplanar = Math.abs( plane.normal.dot( _lineDirection ) ) < EPSILON;
 	if ( areCoplanar ) {
 
 		return false;
@@ -43,34 +41,31 @@ export function trimToBeneathTriPlane( tri, line, lineTarget ) {
 		const { start, end } = lineTarget;
 
 		// test the line side with the largest segment extending beyond the plane
-		let testPoint;
-		let flipped = false;
-		if ( start.distanceTo( _planeHit ) > end.distanceTo( _planeHit ) ) {
+		let testPoint, otherPoint;
+		if ( start.distanceToSquared( _planeHit ) > end.distanceToSquared( _planeHit ) ) {
 
 			testPoint = start;
+			otherPoint = end;
 
 		} else {
 
 			testPoint = end;
-			flipped = true;
+			otherPoint = start;
 
 		}
 
-		// TODO: why are we doing it this way?
 		// get the center point of the line segment and the plane hit
-		_centerPoint.lerpVectors( testPoint, _planeHit, 0.5 );
-		getPlaneYAtPoint( tri.plane, _centerPoint, _planePoint );
+		getPlaneYAtPoint( tri.plane, testPoint, _planePoint );
 
 		// adjust the appropriate line point align with the plane hit point
-		if ( _planePoint.y < _centerPoint.y ) {
+		const isAbove = testPoint.y > _planePoint.y;
+		if ( isAbove ) {
 
-			if ( flipped ) end.copy( _planeHit );
-			else start.copy( _planeHit );
+			testPoint.copy( _planeHit );
 
 		} else {
 
-			if ( flipped ) start.copy( _planeHit );
-			else end.copy( _planeHit );
+			otherPoint.copy( _planeHit );
 
 		}
 

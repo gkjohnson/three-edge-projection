@@ -19,6 +19,7 @@ import { getProjectedOverlaps } from './utils/getProjectedOverlaps.js';
 
 // these shared variables are not used across "yield" boundaries in the
 // generator so there's no risk of overwriting another tasks data
+const DIST_THRESHOLD = 1e-10;
 const _beneathLine = /* @__PURE__ */ new Line3();
 const _ray = /* @__PURE__ */ new Ray();
 const _vec = /* @__PURE__ */ new Vector3();
@@ -138,7 +139,7 @@ export class ProjectionGenerator {
 			}
 
 			const lowestLineY = Math.min( line.start.y, line.end.y );
-			const overlaps = [];
+			const hiddenOverlaps = [];
 			bvh.shapecast( {
 
 				intersectsBounds: box => {
@@ -186,15 +187,16 @@ export class ProjectionGenerator {
 
 					}
 
-					// if this line lies on a triangle edge then don't check it
-					// TODO: do we need this?
+					// if this line lies on a triangle edge then don't check for visual overlaps
+					// with this triangle
 					if ( isLineTriangleEdge( tri, line ) ) {
 
 						return false;
 
 					}
 
-					// TODO: what's this doing?
+					// Check how much of the line is below the plane and skip it if
+					// the line is completely above the plane or a miniscule amount is below
 					trimToBeneathTriPlane( tri, line, _beneathLine );
 
 					if ( isLineAbovePlane( tri.plane, _beneathLine ) ) {
@@ -203,7 +205,7 @@ export class ProjectionGenerator {
 
 					}
 
-					if ( _beneathLine.distance() < 1e-10 ) {
+					if ( _beneathLine.distance() < DIST_THRESHOLD ) {
 
 						return false;
 
@@ -211,16 +213,16 @@ export class ProjectionGenerator {
 
 					// compress the edge overlaps so we can easily tell if the whole edge is hidden already
 					// and exit early
-					if ( getProjectedOverlaps( tri, line, overlaps ) ) {
+					if ( getProjectedOverlaps( tri, line, hiddenOverlaps ) ) {
 
-						compressEdgeOverlaps( overlaps );
+						compressEdgeOverlaps( hiddenOverlaps );
 
 					}
 
 					// if we're hiding the edge entirely now then skip further checks
-					if ( overlaps.length !== 0 ) {
+					if ( hiddenOverlaps.length !== 0 ) {
 
-						const [ d0, d1 ] = overlaps[ overlaps.length - 1 ];
+						const [ d0, d1 ] = hiddenOverlaps[ hiddenOverlaps.length - 1 ];
 						return d0 === 0.0 && d1 === 1.0;
 
 					}
@@ -232,7 +234,7 @@ export class ProjectionGenerator {
 			} );
 
 			// convert the overlap points to proper lines
-			overlapsToLines( line, overlaps, finalEdges.edges );
+			overlapsToLines( line, hiddenOverlaps, finalEdges.edges );
 
 			const delta = performance.now() - time;
 			if ( delta > iterationTime ) {

@@ -33,7 +33,7 @@ const params = {
 };
 
 let renderer, camera, scene, gui, controls;
-let lines, model, projection, group, whiteModel;
+let lines, model, projection, group, shadedWhiteModel, whiteModel;
 let outputContainer;
 let worker;
 let task = null;
@@ -73,13 +73,33 @@ async function init() {
 		.loadAsync( 'https://raw.githubusercontent.com/gkjohnson/3d-demo-data/main/models/nasa-m2020/Perseverance.glb' );
 	model = gltf.scene;
 
-	const whiteMaterial = new THREE.MeshStandardMaterial();
+	const whiteMaterial = new THREE.MeshStandardMaterial( {
+		polygonOffset: true,
+		polygonOffsetFactor: 1,
+		polygonOffsetUnits: 1,
+	} );
+	shadedWhiteModel = model.clone();
+	shadedWhiteModel.traverse( c => {
+
+		if ( c.material ) {
+
+			c.material = whiteMaterial;
+
+		}
+
+	} );
+
+	const whiteBasicMaterial = new THREE.MeshBasicMaterial( {
+		polygonOffset: true,
+		polygonOffsetFactor: 1,
+		polygonOffsetUnits: 1,
+	} );
 	whiteModel = model.clone();
 	whiteModel.traverse( c => {
 
 		if ( c.material ) {
 
-			c.material = whiteMaterial;
+			c.material = whiteBasicMaterial;
 
 		}
 
@@ -92,7 +112,7 @@ async function init() {
 	box.setFromObject( model, true );
 	box.getCenter( group.position ).multiplyScalar( - 1 );
 	group.position.y = Math.max( 0, - box.min.y ) + 1;
-	group.add( model, whiteModel );
+	group.add( model, shadedWhiteModel, whiteModel );
 
 	// generate geometry line segments
 	lines = new THREE.Group();
@@ -116,7 +136,7 @@ async function init() {
 	scene.add( projection );
 
 	// camera setup
-	camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.01, 100 );
+	camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 50 );
 	camera.position.setScalar( 3.5 );
 	camera.updateProjectionMatrix();
 
@@ -124,7 +144,7 @@ async function init() {
 	controls = new OrbitControls( camera, renderer.domElement );
 
 	gui = new GUI();
-	gui.add( params, 'displayModel', [ 'none', 'color', 'white' ] );
+	gui.add( params, 'displayModel', [ 'none', 'color', 'shaded white', 'white' ] );
 	gui.add( params, 'displayEdges' );
 	gui.add( params, 'displayProjection' );
 	gui.add( params, 'sortEdges' );
@@ -272,6 +292,7 @@ function render() {
 	}
 
 	model.visible = params.displayModel === 'color';
+	shadedWhiteModel.visible = params.displayModel === 'shaded white';
 	whiteModel.visible = params.displayModel === 'white';
 	lines.visible = params.displayEdges;
 	projection.visible = params.displayProjection;
