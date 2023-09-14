@@ -1,7 +1,7 @@
 import { Vector3 } from 'three';
 
 const EPSILON = 1e-16;
-const _upVector = new Vector3( 0, 1, 0 );
+const _upVector = /* @__PURE__ */ new Vector3( 0, 1, 0 );
 
 export const isYProjectedLineDegenerate = ( function () {
 

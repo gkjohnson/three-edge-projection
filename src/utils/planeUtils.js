@@ -1,8 +1,8 @@
 import { Vector3, Line3 } from "three";
 
-const _line = new Line3();
-const _v0 = new Vector3();
-const _v1 = new Vector3();
+const _line = /* @__PURE__ */ new Line3();
+const _v0 = /* @__PURE__ */ new Vector3();
+const _v1 = /* @__PURE__ */ new Vector3();
 
 // returns the the y value on the plane at the given point x, z
 export function getPlaneYAtPoint( plane, point, target = null ) {

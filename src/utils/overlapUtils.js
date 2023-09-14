@@ -1,6 +1,6 @@
 import { Line3 } from 'three';
 
-const _line = new Line3();
+const _line = /* @__PURE__ */ new Line3();
 
 // compresses the given edge overlaps into a minimal set of representative objects
 export function compressEdgeOverlaps( overlaps ) {

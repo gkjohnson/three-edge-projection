@@ -2,11 +2,10 @@ import { Vector3 } from 'three';
 import { getPlaneYAtPoint } from './planeUtils.js';
 import { isYProjectedTriangleDegenerate } from './triangleLineUtils.js';
 
-const _lineDirection = new Vector3();
-const _planeHit = new Vector3();
-const _centerPoint = new Vector3();
-const _planePoint = new Vector3();
-
+const _lineDirection = /* @__PURE__ */ new Vector3();
+const _planeHit = /* @__PURE__ */ new Vector3();
+const _centerPoint = /* @__PURE__ */ new Vector3();
+const _planePoint = /* @__PURE__ */ new Vector3();
 export function trimToBeneathTriPlane( tri, line, lineTarget ) {
 
 	if ( tri.needsUpdate ) {

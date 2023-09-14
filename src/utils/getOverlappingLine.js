@@ -1,13 +1,13 @@
 import { Vector3, Line3, Plane } from 'three';
 
 const AREA_EPSILON = 1e-16;
-const _dir0 = new Vector3();
-const _dir1 = new Vector3();
-const _tempDir = new Vector3();
-const _orthoPlane = new Plane();
-const _line0 = new Line3();
-const _line1 = new Line3();
-const _tempLine = new Line3();
+const _dir0 = /* @__PURE__ */ new Vector3();
+const _dir1 = /* @__PURE__ */ new Vector3();
+const _tempDir = /* @__PURE__ */ new Vector3();
+const _orthoPlane = /* @__PURE__ */ new Plane();
+const _line0 = /* @__PURE__ */ new Line3();
+const _line1 = /* @__PURE__ */ new Line3();
+const _tempLine = /* @__PURE__ */ new Line3();
 
 // outputs the overlapping segment of a coplanar line and triangle
 export function getOverlappingLine( line, triangle, lineTarget = new Line3() ) {

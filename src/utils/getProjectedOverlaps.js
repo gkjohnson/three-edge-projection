@@ -5,12 +5,12 @@ import { getOverlappingLine } from './getOverlappingLine.js';
 // Extracts the normalized [0, 1] distances along the given line that overlaps with the provided triangle when
 // projected along the y axis
 const DIST_EPSILON = 1e-16;
-const _target = new Line3();
-const _tempDir = new Vector3();
-const _tempVec0 = new Vector3();
-const _tempVec1 = new Vector3();
-const _line = new Line3();
-const _tri = new ExtendedTriangle();
+const _target = /* @__PURE__ */ new Line3();
+const _tempDir = /* @__PURE__ */ new Vector3();
+const _tempVec0 = /* @__PURE__ */ new Vector3();
+const _tempVec1 = /* @__PURE__ */ new Vector3();
+const _line = /* @__PURE__ */ new Line3();
+const _tri = /* @__PURE__ */ new ExtendedTriangle();
 
 export function getProjectedOverlaps( tri, line, overlapsTarget ) {
 
