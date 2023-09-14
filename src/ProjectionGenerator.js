@@ -1,20 +1,21 @@
-import { BufferGeometry,
+import {
+	BufferGeometry,
 	Vector3,
 	Line3,
 	Ray,
+	BufferAttribute,
 } from 'three';
 import { MeshBVH } from 'three-mesh-bvh';
 import {
-	isLineAbovePlane,
 	isYProjectedTriangleDegenerate,
 	isLineTriangleEdge,
 	trimToBeneathTriPlane,
-	edgesToGeometry,
 	getProjectedOverlaps,
 	isYProjectedLineDegenerate,
-} from './edgeUtils.js';
+} from './utils/triangleLineUtils.js';
 import { generateEdges } from './utils/generateEdges.js';
 import { compressEdgeOverlaps, overlapsToLines } from './utils/overlapUtils.js';
+import { isLineAbovePlane } from './utils/planeUtils.js';
 
 class EdgeSet {
 
@@ -26,7 +27,25 @@ class EdgeSet {
 
 	getLineGeometry( y = 0 ) {
 
-		return edgesToGeometry( this.edges, y );
+		const edges = this.edges;
+		const edgeArray = new Float32Array( edges.length * 6 );
+		let c = 0;
+		for ( let i = 0, l = edges.length; i < l; i ++ ) {
+
+			const line = edges[ i ];
+			edgeArray[ c ++ ] = line[ 0 ];
+			edgeArray[ c ++ ] = y;
+			edgeArray[ c ++ ] = line[ 2 ];
+			edgeArray[ c ++ ] = line[ 3 ];
+			edgeArray[ c ++ ] = y;
+			edgeArray[ c ++ ] = line[ 5 ];
+
+		}
+
+		const edgeGeom = new BufferGeometry();
+		const edgeBuffer = new BufferAttribute( edgeArray, 3, true );
+		edgeGeom.setAttribute( 'position', edgeBuffer );
+		return edgeGeom;
 
 	}
 

@@ -1,4 +1,5 @@
-import { Vector3, Line3, Plane, BufferGeometry, BufferAttribute } from 'three';
+import { Vector3, Line3, Plane } from 'three';
+import { getPlaneYAtPoint } from './planeUtils.js';
 import { ExtendedTriangle } from 'three-mesh-bvh';
 
 const _upVector = new Vector3( 0, 1, 0 );
@@ -150,41 +151,6 @@ export const getOverlappingLine = ( function () {
 		}
 
 		return null;
-
-	};
-
-} )();
-
-// returns the the y value on the plane at the given point x, z
-export const getPlaneYAtPoint = ( function () {
-
-	const testLine = new Line3();
-	return function getPlaneYAtPoint( plane, point, target = null ) {
-
-		testLine.start.copy( point );
-		testLine.end.copy( point );
-
-		testLine.start.y += 1e5;
-		testLine.end.y -= 1e5;
-
-		plane.intersectLine( testLine, target );
-
-	};
-
-} )();
-
-// returns whether the given line is above the given triangle plane
-export const isLineAbovePlane = ( function () {
-
-	const _v0 = new Vector3();
-	const _v1 = new Vector3();
-
-	return function isLineAbovePlane( plane, line ) {
-
-		_v0.lerpVectors( line.start, line.end, 0.5 );
-		getPlaneYAtPoint( plane, _v0, _v1 );
-
-		return _v1.y < _v0.y;
 
 	};
 
@@ -381,29 +347,4 @@ export const trimToBeneathTriPlane = ( function () {
 	};
 
 } )();
-
-
-// converts the given list of edges to a line segments geometry
-export function edgesToGeometry( edges, y = null ) {
-
-	const edgeArray = new Float32Array( edges.length * 6 );
-	let c = 0;
-	for ( let i = 0, l = edges.length; i < l; i ++ ) {
-
-		const line = edges[ i ];
-		edgeArray[ c ++ ] = line[ 0 ];
-		edgeArray[ c ++ ] = y === null ? line[ 1 ] : y;
-		edgeArray[ c ++ ] = line[ 2 ];
-		edgeArray[ c ++ ] = line[ 3 ];
-		edgeArray[ c ++ ] = y === null ? line[ 4 ] : y;
-		edgeArray[ c ++ ] = line[ 5 ];
-
-	}
-
-	const edgeGeom = new BufferGeometry();
-	const edgeBuffer = new BufferAttribute( edgeArray, 3, true );
-	edgeGeom.setAttribute( 'position', edgeBuffer );
-	return edgeGeom;
-
-}
 
