@@ -1,6 +1,8 @@
 import { Vector3, Line3, Plane } from 'three';
 
 const AREA_EPSILON = 1e-16;
+const COPLANAR_EPSILON = 1e-16;
+const DIST_EPSILON = 1e-16;
 const _dir0 = /* @__PURE__ */ new Vector3();
 const _dir1 = /* @__PURE__ */ new Vector3();
 const _tempDir = /* @__PURE__ */ new Vector3();
@@ -8,13 +10,14 @@ const _orthoPlane = /* @__PURE__ */ new Plane();
 const _line0 = /* @__PURE__ */ new Line3();
 const _line1 = /* @__PURE__ */ new Line3();
 const _tempLine = /* @__PURE__ */ new Line3();
+const _point = /* @___PURE__ */ new Vector3();
 
 // outputs the overlapping segment of a coplanar line and triangle
 export function getOverlappingLine( line, triangle, lineTarget = new Line3() ) {
 
 	if ( triangle.needsUpdate ) {
 
-		triangle.needsUpdate();
+		triangle.update();
 
 	}
 
@@ -28,17 +31,17 @@ export function getOverlappingLine( line, triangle, lineTarget = new Line3() ) {
 	const { points, plane } = triangle;
 
 	_line0.copy( line );
-	_line0.delta( _dir0 );
+	_line0.delta( _dir0 ).normalize();
 
 	// if the line and triangle are not coplanar then return no overlap
-	const areCoplanar = plane.normal.dot( _dir0 ) === 0.0;
+	const areCoplanar = Math.abs( plane.normal.dot( _dir0 ) ) < COPLANAR_EPSILON;
 	if ( ! areCoplanar ) {
 
 		return null;
 
 	}
 
-	// a plane that's orthogonal to the triangle that the line lies on
+	// a plane that's orthogonal to the triangle that the line lies on the line
 	_dir0.cross( plane.normal ).normalize();
 	_orthoPlane.setFromNormalAndCoplanarPoint( _dir0, _line0.start );
 
@@ -51,29 +54,31 @@ export function getOverlappingLine( line, triangle, lineTarget = new Line3() ) {
 
 		_tempLine.start.copy( p1 );
 		_tempLine.end.copy( p2 );
-		if ( _orthoPlane.distanceToPoint( _tempLine.end ) === 0 && _orthoPlane.distanceToPoint( _tempLine.start ) === 0 ) {
+		if (
+			Math.abs( _orthoPlane.distanceToPoint( _tempLine.end ) ) < DIST_EPSILON &&
+			Math.abs( _orthoPlane.distanceToPoint( _tempLine.start ) ) < DIST_EPSILON
+		) {
 
 			// if the edge lies on the plane then take the line
 			_line1.copy( _tempLine );
 			intersectCount = 2;
 			break;
 
-		} else if ( _orthoPlane.intersectLine( _tempLine, intersectCount === 0 ? _line1.start : _line1.end ) ) {
+		} else if ( _orthoPlane.intersectLine( _tempLine, _point ) ) {
 
-			let p;
-			if ( intersectCount === 0 ) {
+			if ( _point.distanceToSquared( p2 ) < DIST_EPSILON ) {
 
-				p = _line1.start;
-
-			} else {
-
-				p = _line1.end;
+				continue;
 
 			}
 
-			if ( p.distanceTo( p2 ) === 0.0 ) {
+			if ( intersectCount === 0 ) {
 
-				continue;
+				_line1.start.copy( _point );
+
+			} else {
+
+				_line1.end.copy( _point );
 
 			}
 

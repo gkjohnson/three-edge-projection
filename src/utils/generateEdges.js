@@ -1,13 +1,14 @@
 import { Vector3, Triangle, Line3, MathUtils } from 'three';
 
 // Modified version of js EdgesGeometry logic to handle silhouette edges
+const UP_VECTOR = /* @__PURE__ */ new Vector3( 0, 1, 0 );
 const _v0 = /* @__PURE__ */ new Vector3();
 const _v1 = /* @__PURE__ */ new Vector3();
 const _normal = /* @__PURE__ */ new Vector3();
 const _triangle = /* @__PURE__ */ new Triangle();
 
 // TODO: find edges defined by triangle intersections
-export function generateEdges( geometry, projectionDir, thresholdAngle = 1 ) {
+export function generateEdges( geometry, projectionDir = UP_VECTOR, thresholdAngle = 1 ) {
 
 	const edges = [];
 

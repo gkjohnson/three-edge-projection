@@ -6,9 +6,9 @@ import { getOverlappingLine } from './getOverlappingLine.js';
 // projected along the y axis
 const DIST_EPSILON = 1e-16;
 const _target = /* @__PURE__ */ new Line3();
-const _tempDir = /* @__PURE__ */ new Vector3();
-const _tempVec0 = /* @__PURE__ */ new Vector3();
-const _tempVec1 = /* @__PURE__ */ new Vector3();
+const _dir = /* @__PURE__ */ new Vector3();
+const _v0 = /* @__PURE__ */ new Vector3();
+const _v1 = /* @__PURE__ */ new Vector3();
 const _line = /* @__PURE__ */ new Line3();
 const _tri = /* @__PURE__ */ new ExtendedTriangle();
 
@@ -30,12 +30,13 @@ export function getProjectedOverlaps( tri, line, overlapsTarget ) {
 	// distances along the original line to return
 	if ( getOverlappingLine( _line, _tri, _target ) ) {
 
-		_line.delta( _tempDir );
-		_tempVec0.subVectors( _target.start, _line.start );
-		_tempVec1.subVectors( _target.end, _line.start );
+		_line.delta( _dir );
+		_v0.subVectors( _target.start, _line.start );
+		_v1.subVectors( _target.end, _line.start );
 
-		let d0 = _tempVec0.length() / _tempDir.length();
-		let d1 = _tempVec1.length() / _tempDir.length();
+		const length = _dir.length();
+		let d0 = _v0.length() / length;
+		let d1 = _v1.length() / length;
 
 		d0 = Math.min( Math.max( d0, 0 ), 1 );
 		d1 = Math.min( Math.max( d1, 0 ), 1 );

@@ -20,6 +20,7 @@ import { getProjectedOverlaps } from './utils/getProjectedOverlaps.js';
 // these shared variables are not used across "yield" boundaries in the
 // generator so there's no risk of overwriting another tasks data
 const DIST_THRESHOLD = 1e-10;
+const UP_VECTOR = /* @__PURE__ */ new Vector3( 0, 1, 0 );
 const _beneathLine = /* @__PURE__ */ new Line3();
 const _ray = /* @__PURE__ */ new Ray();
 const _vec = /* @__PURE__ */ new Vector3();
@@ -64,6 +65,7 @@ export class ProjectionGenerator {
 
 		this.sortEdges = true;
 		this.iterationTime = 30;
+		this.angleThreshold = 50;
 
 	}
 
@@ -104,7 +106,7 @@ export class ProjectionGenerator {
 	*generate( bvh, options = {} ) {
 
 		const { onProgress } = options;
-		const { sortEdges, iterationTime } = this;
+		const { sortEdges, iterationTime, angleThreshold } = this;
 
 		if ( bvh instanceof BufferGeometry ) {
 
@@ -113,7 +115,7 @@ export class ProjectionGenerator {
 		}
 
 		const geometry = bvh.geometry;
-		const edges = generateEdges( geometry, new Vector3( 0, 1, 0 ), 50 );
+		const edges = generateEdges( geometry, UP_VECTOR, angleThreshold );
 		if ( sortEdges ) {
 
 			edges.sort( ( a, b ) => {
