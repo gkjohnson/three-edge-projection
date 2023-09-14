@@ -55,6 +55,12 @@ iterationTime = 10 : Number
 
 How long to spend trimming edges before yielding.
 
+### .angleThreshold
+
+```js
+angleThreshold = 50 : Number
+```
+
 ### .generate
 
 ```js

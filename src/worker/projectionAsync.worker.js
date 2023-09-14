@@ -33,6 +33,7 @@ onmessage = function ( { data } ) {
 		const bvh = new MeshBVH( geometry );
 		const generator = new ProjectionGenerator();
 		generator.sortEdges = options.sortEdges ?? generator.sortEdges;
+		generator.angleThreshold = options.angleThreshold ?? options.angleThreshold;
 
 		const task = generator.generate( bvh, {
 			onProgress: onProgressCallback,
