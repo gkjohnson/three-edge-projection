@@ -6,6 +6,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { ProjectionGenerator } from '..';
 import { ProjectionGeneratorWorker } from '../src/worker/ProjectionGeneratorWorker.js';
+import { generateEdges } from '../src/utils/generateEdges.js';
 
 const params = {
 	displayModel: 'color',
@@ -32,6 +33,7 @@ const params = {
 	},
 };
 
+const ANGLE_THRESHOLD = 1;
 let renderer, camera, scene, gui, controls;
 let lines, model, projection, group, shadedWhiteModel, whiteModel;
 let outputContainer;
@@ -120,7 +122,12 @@ async function init() {
 
 		if ( c.geometry ) {
 
-			const geomLines = new THREE.LineSegments( new THREE.EdgesGeometry( c.geometry, 50 ), new THREE.LineBasicMaterial( { color: 0x030303 } ) );
+			const edges = generateEdges( c.geometry, undefined, ANGLE_THRESHOLD );
+			const points = edges.flatMap( line => [ line.start, line.end ] );
+			const geom = new THREE.BufferGeometry();
+			geom.setFromPoints( points );
+
+			const geomLines = new THREE.LineSegments( geom, new THREE.LineBasicMaterial( { color: 0x030303 } ) );
 			geomLines.position.copy( c.position );
 			geomLines.quaternion.copy( c.quaternion );
 			geomLines.scale.copy( c.scale );
@@ -136,7 +143,7 @@ async function init() {
 	scene.add( projection );
 
 	// camera setup
-	camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 50 );
+	camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.01, 50 );
 	camera.position.setScalar( 3.5 );
 	camera.updateProjectionMatrix();
 
@@ -212,6 +219,7 @@ function* updateEdges( runTime = 30 ) {
 		const generator = new ProjectionGenerator();
 		generator.sortEdges = params.sortEdges;
 		generator.iterationTime = runTime;
+		generator.angleThreshold = ANGLE_THRESHOLD;
 
 		const task = generator.generate( mergedGeometry, {
 
