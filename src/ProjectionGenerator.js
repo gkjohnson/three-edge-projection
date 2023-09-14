@@ -5,17 +5,16 @@ import { BufferGeometry,
 } from 'three';
 import { MeshBVH } from 'three-mesh-bvh';
 import {
-	generateEdges,
 	isLineAbovePlane,
 	isYProjectedTriangleDegenerate,
 	isLineTriangleEdge,
 	trimToBeneathTriPlane,
 	edgesToGeometry,
-	overlapsToLines,
 	getProjectedOverlaps,
 	isYProjectedLineDegenerate,
-	compressEdgeOverlaps,
-} from '..';
+} from './edgeUtils.js';
+import { generateEdges } from './utils/generateEdges.js';
+import { compressEdgeOverlaps, overlapsToLines } from './utils/overlapUtils.js';
 
 class EdgeSet {
 
