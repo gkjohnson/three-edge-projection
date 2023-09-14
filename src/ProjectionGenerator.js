@@ -60,14 +60,21 @@ export class ProjectionGenerator {
 
 	}
 
-	generateAsync( ...args ) {
+	generateAsync( geometry, options ) {
 
-		return new Promise( resolve => {
+		return new Promise( ( resolve, reject ) => {
 
-			const task = this.generate( ...args );
+			const { signal } = options;
+			const task = this.generate( geometry, options );
 			run();
 
 			function run() {
+
+				if ( signal.aborted ) {
+
+					reject( new Error( 'ProjectionGenerator: Process aborted via AbortSignal.' ) );
+
+				}
 
 				const result = task.next();
 				if ( result.done ) {

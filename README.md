@@ -75,6 +75,7 @@ async generateAsync(
 	geometry : MeshBVH | BufferGeometry,
 	options : {
 		onProgress: ( percent : Number ) => void,
+		signal: AbortSignal,
 	}
 ) : BufferGeometry
 ```
