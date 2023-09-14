@@ -8,6 +8,8 @@ TODO
 
 # Use
 
+**Generator**
+
 ```js
 const generator = new ProjectionGenerator();
 generator.generate( geometry );
@@ -22,6 +24,16 @@ while ( ! result.done ) {
 const mesh = new Mesh( result.value, material );
 scene.add( mesh );
 ```
+
+**Promise**
+
+```js
+const generator = new ProjectionGenerator();
+const geometry = await generator.generateAsync( geometry );
+const mesh = new Mesh( result.value, material );
+scene.add( mesh );
+```
+
 
 # API
 
@@ -55,3 +67,16 @@ How long to spend trimming edges before yielding.
 ```
 
 Generate the geometry using a generator function.
+
+### .generateAsync
+
+```js
+async generateAsync(
+	geometry : MeshBVH | BufferGeometry,
+	options : {
+		onProgress: ( percent : Number ) => void,
+	}
+) : BufferGeometry
+```
+
+Generate the geometry with a promise-style API.
