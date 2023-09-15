@@ -174,7 +174,7 @@ export class ProjectionGenerator {
 
 				intersectsTriangle: tri => {
 
-					// skip the triangle if it is completely below the line
+					// skip the triangle if the triangle is completely below the line
 					const highestTriangleY = Math.max( tri.a.y, tri.b.y, tri.c.y );
 					if ( highestTriangleY < lowestLineY ) {
 
@@ -197,11 +197,10 @@ export class ProjectionGenerator {
 
 					}
 
-					// Check how much of the line is below the plane and skip it if
-					// the line is completely above the plane or a miniscule amount is below
-					trimToBeneathTriPlane( tri, line, _beneathLine );
-
-					if ( isLineAbovePlane( tri.plane, _beneathLine ) ) {
+					// Retrieve the portion of line that is below the plane - and skip the triangle if none
+					// of it is
+					// TODO: we can skip this if we know the line is completely below the triangle
+					if ( ! trimToBeneathTriPlane( tri, line, _beneathLine ) ) {
 
 						return false;
 

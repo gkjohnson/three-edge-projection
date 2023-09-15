@@ -1,20 +1,15 @@
 import { Vector3 } from 'three';
 
 const EPSILON = 1e-16;
-const _upVector = /* @__PURE__ */ new Vector3( 0, 1, 0 );
+const UP_VECTOR = /* @__PURE__ */ new Vector3( 0, 1, 0 );
+const _dir = new Vector3();
 
-export const isYProjectedLineDegenerate = ( function () {
+export function isYProjectedLineDegenerate( line ) {
 
-	const _tempDir = new Vector3();
-	const _upVector = new Vector3( 0, 1, 0 );
-	return function isYProjectedLineDegenerate( line ) {
+	line.delta( _dir ).normalize();
+	return Math.abs( _dir.dot( UP_VECTOR ) ) >= 1.0 - EPSILON;
 
-		line.delta( _tempDir ).normalize();
-		return Math.abs( _tempDir.dot( _upVector ) ) >= 1.0 - EPSILON;
-
-	};
-
-} )();
+}
 
 // checks whether the y-projected triangle will be degenerate
 export function isYProjectedTriangleDegenerate( tri ) {
@@ -25,21 +20,20 @@ export function isYProjectedTriangleDegenerate( tri ) {
 
 	}
 
-	return Math.abs( tri.plane.normal.dot( _upVector ) ) <= EPSILON;
+	return Math.abs( tri.plane.normal.dot( UP_VECTOR ) ) <= EPSILON;
 
 }
 
 // Is the provided line exactly an edge on the triangle
-// TODO: this potentially seems problematic?
 export function isLineTriangleEdge( tri, line ) {
 
 	// if this is the same line as on the triangle
+	const { start, end } = line;
 	const triPoints = tri.points;
 	let startMatches = false;
 	let endMatches = false;
 	for ( let i = 0; i < 3; i ++ ) {
 
-		const { start, end } = line;
 		const tp = triPoints[ i ];
 		if ( ! startMatches && start.distanceToSquared( tp ) <= EPSILON ) {
 
