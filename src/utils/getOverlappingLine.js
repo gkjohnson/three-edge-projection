@@ -1,4 +1,4 @@
-import { Vector3, Line3, Plane } from 'three';
+import { Vector3, Line3, Plane, LineLoop } from 'three';
 
 const AREA_EPSILON = 1e-16;
 const COPLANAR_EPSILON = 1e-16;
@@ -10,7 +10,8 @@ const _orthoPlane = /* @__PURE__ */ new Plane();
 const _line0 = /* @__PURE__ */ new Line3();
 const _line1 = /* @__PURE__ */ new Line3();
 const _tempLine = /* @__PURE__ */ new Line3();
-const _point = /* @___PURE__ */ new Vector3();
+const _point = /* @__PURE__ */ new Vector3();
+const _vec = /* @__PURE__ */ new Vector3();
 
 // outputs the overlapping segment of a coplanar line and triangle
 export function getOverlappingLine( line, triangle, lineTarget = new Line3() ) {
@@ -85,7 +86,7 @@ export function getOverlappingLine( line, triangle, lineTarget = new Line3() ) {
 			intersectCount ++;
 			if ( intersectCount === 2 ) {
 
-				break;
+				// break;
 
 			}
 
@@ -108,42 +109,42 @@ export function getOverlappingLine( line, triangle, lineTarget = new Line3() ) {
 
 		}
 
+		// TODO: this could be an issue
 		// check if the edges are overlapping
-		const s1 = _line0.start.dot( _dir0 );
-		const e1 = _line0.end.dot( _dir0 );
-		const s2 = _line1.start.dot( _dir0 );
-		const e2 = _line1.end.dot( _dir0 );
-		const separated1 = e1 < s2;
-		const separated2 = s1 < e2;
+		const s1 = 0;
+		const e1 = _vec.subVectors( _line0.end, _line0.start ).dot( _dir0 );
+		const s2 = _vec.subVectors( _line1.start, _line0.start ).dot( _dir0 );
+		const e2 = _vec.subVectors( _line1.end, _line0.start ).dot( _dir0 );
+		const separated1 = e1 <= s2;
+		const separated2 = e2 <= s1;
 
-		if ( s1 !== e2 && s2 !== e1 && separated1 === separated2 ) {
 
-			return null;
+		// console.log( [s1, e1], [ s2, e2 ], separated1, separated2);
 
-		}
+		// if ( s1 !== e2 && s2 !== e1 && separated1 === separated2 ) {
+		if ( separated1 || separated2 ) {
 
-		// assign the target output
-		_tempDir.subVectors( _line0.start, _line1.start );
-		if ( _tempDir.dot( _dir0 ) > 0 ) {
-
-			lineTarget.start.copy( _line0.start );
-
-		} else {
-
-			lineTarget.start.copy( _line1.start );
+			// return null;
 
 		}
 
-		_tempDir.subVectors( _line0.end, _line1.end );
-		if ( _tempDir.dot( _dir0 ) < 0 ) {
 
-			lineTarget.end.copy( _line0.end );
+		// console.log( Math.max( s1, s2 ), Math.max( e1, e2 ))
 
-		} else {
+		lineTarget.start
+			.copy( _line0.start )
+			.addScaledVector( _dir0, Math.max( s1, s2 ) );
+		lineTarget.end
+			.copy( _line0.start )
+			.addScaledVector( _dir0, Math.min( e1, e2 ) );
 
-			lineTarget.end.copy( _line1.end );
+		if ( separated1 || separated2 ) {
+
+			// return null;
+			console.log(  Math.max( s1, s2 ), Math.min( e1, e2 ) )
 
 		}
+
 
 		return lineTarget;
 

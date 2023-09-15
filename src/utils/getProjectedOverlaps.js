@@ -30,6 +30,12 @@ export function getProjectedOverlaps( tri, line, overlapsTarget ) {
 	// distances along the original line to return
 	if ( getOverlappingLine( _line, _tri, _target ) ) {
 
+		// const dir0 = _line.delta( new Vector3 ).normalize()
+		// const dir1 = _target.delta( new Vector3 ).normalize()
+
+		// if ( dir0.dot( dir1 ) < 0 ) console.log( dir0.dot( dir1 ) );
+
+		// TODO: there are small vectors facing in opposite directions cropping up here
 		_line.delta( _dir );
 		_v0.subVectors( _target.start, _line.start );
 		_v1.subVectors( _target.end, _line.start );
@@ -37,6 +43,8 @@ export function getProjectedOverlaps( tri, line, overlapsTarget ) {
 		const length = _dir.length();
 		let d0 = _v0.length() / length;
 		let d1 = _v1.length() / length;
+
+		// console.log( d0, d1 );
 
 		d0 = Math.min( Math.max( d0, 0 ), 1 );
 		d1 = Math.min( Math.max( d1, 0 ), 1 );
