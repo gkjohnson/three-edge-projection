@@ -215,6 +215,7 @@ export class ProjectionGenerator {
 
 					// compress the edge overlaps so we can easily tell if the whole edge is hidden already
 					// and exit early
+					// TODO: this needs to account for just the "beneath line" but the 0, 1 range needs to be relative to the original line
 					if ( getProjectedOverlaps( tri, line, hiddenOverlaps ) ) {
 
 						compressEdgeOverlaps( hiddenOverlaps );
