@@ -1,11 +1,10 @@
-import { Vector3, Line3, Plane, LineLoop } from 'three';
+import { Vector3, Line3, Plane } from 'three';
 
 const AREA_EPSILON = 1e-16;
 const COPLANAR_EPSILON = 1e-16;
 const DIST_EPSILON = 1e-16;
 const _dir0 = /* @__PURE__ */ new Vector3();
 const _dir1 = /* @__PURE__ */ new Vector3();
-const _tempDir = /* @__PURE__ */ new Vector3();
 const _orthoPlane = /* @__PURE__ */ new Plane();
 const _line0 = /* @__PURE__ */ new Line3();
 const _line1 = /* @__PURE__ */ new Line3();

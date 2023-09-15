@@ -6,7 +6,7 @@
   "scripts": {
     "start": "parcel serve ./example/*.html --dist-dir ./example/dev-bundle/ --no-hmr",
     "build-examples": "cd example && parcel build ./*.html --dist-dir ./bundle/ --public-url . --no-cache --no-content-hash",
-    "lint": "eslint \"./src/**/*.{js,ts}\" \"./test/**/*.{js,ts}\" \"./example/*.js\"",
+    "lint": "eslint \"./src/**/*.js\" \"./example/*.js\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "files": [
