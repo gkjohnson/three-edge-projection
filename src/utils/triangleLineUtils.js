@@ -35,25 +35,32 @@ export function isLineTriangleEdge( tri, line ) {
 
 	// if this is the same line as on the triangle
 	const triPoints = tri.points;
-	let matches = 0;
+	let startMatches = false;
+	let endMatches = false;
 	for ( let i = 0; i < 3; i ++ ) {
 
 		const { start, end } = line;
 		const tp = triPoints[ i ];
-		if ( start.distanceToSquared( tp ) <= EPSILON ) {
+		if ( ! startMatches && start.distanceToSquared( tp ) <= EPSILON ) {
 
-			matches ++;
+			startMatches = true;
 
 		}
 
-		if ( end.distanceToSquared( tp ) <= EPSILON ) {
+		if ( ! endMatches && end.distanceToSquared( tp ) <= EPSILON ) {
 
-			matches ++;
+			endMatches = true;
+
+		}
+
+		if ( startMatches && endMatches ) {
+
+			return true;
 
 		}
 
 	}
 
-	return matches >= 2;
+	return startMatches && endMatches;
 
 }
