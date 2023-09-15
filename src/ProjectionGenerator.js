@@ -147,7 +147,7 @@ export class ProjectionGenerator {
 				intersectsBounds: box => {
 
 					// expand the bounding box to the bottom height of the line
-					box.min.y = Math.min( lowestLineY, box.min.y );
+					box.min.y = Math.min( lowestLineY - 1e-6, box.min.y );
 
 					// get the line as a ray
 					const { origin, direction } = _ray;
