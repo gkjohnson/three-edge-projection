@@ -55,21 +55,15 @@ export function getOverlappingLine( line, triangle, lineTarget = new Line3() ) {
 
 		_tempLine.start.copy( p1 );
 		_tempLine.end.copy( p2 );
-		if (
-			Math.abs( _orthoPlane.distanceToPoint( _tempLine.end ) ) < DIST_EPSILON &&
-			Math.abs( _orthoPlane.distanceToPoint( _tempLine.start ) ) < DIST_EPSILON
-		) {
+		const startIntersects = Math.abs( _orthoPlane.distanceToPoint( _tempLine.start ) ) < DIST_EPSILON;
+		const endIntersects = Math.abs( _orthoPlane.distanceToPoint( _tempLine.end ) ) < DIST_EPSILON;
+		const edgeIntersects = _orthoPlane.intersectLine( _tempLine, _point );
 
-			// if the edge lies on the plane then take the line
-			_line1.copy( _tempLine );
-			intersectCount = 2;
-			break;
+		if ( edgeIntersects && ! endIntersects || startIntersects ) {
 
-		} else if ( _orthoPlane.intersectLine( _tempLine, _point ) ) {
+			if ( startIntersects && ! edgeIntersects ) {
 
-			if ( _point.distanceToSquared( p2 ) < DIST_EPSILON ) {
-
-				continue;
+				_point.copy( _tempLine.start );
 
 			}
 
@@ -86,7 +80,7 @@ export function getOverlappingLine( line, triangle, lineTarget = new Line3() ) {
 			intersectCount ++;
 			if ( intersectCount === 2 ) {
 
-				// break;
+				break;
 
 			}
 
@@ -109,7 +103,6 @@ export function getOverlappingLine( line, triangle, lineTarget = new Line3() ) {
 
 		}
 
-		// TODO: this could be an issue
 		// check if the edges are overlapping
 		const s1 = 0;
 		const e1 = _vec.subVectors( _line0.end, _line0.start ).dot( _dir0 );
@@ -118,18 +111,11 @@ export function getOverlappingLine( line, triangle, lineTarget = new Line3() ) {
 		const separated1 = e1 <= s2;
 		const separated2 = e2 <= s1;
 
-
-		// console.log( [s1, e1], [ s2, e2 ], separated1, separated2);
-
-		// if ( s1 !== e2 && s2 !== e1 && separated1 === separated2 ) {
 		if ( separated1 || separated2 ) {
 
-			// return null;
+			return null;
 
 		}
-
-
-		// console.log( Math.max( s1, s2 ), Math.max( e1, e2 ))
 
 		lineTarget.start
 			.copy( _line0.start )
@@ -137,14 +123,6 @@ export function getOverlappingLine( line, triangle, lineTarget = new Line3() ) {
 		lineTarget.end
 			.copy( _line0.start )
 			.addScaledVector( _dir0, Math.min( e1, e2 ) );
-
-		if ( separated1 || separated2 ) {
-
-			// return null;
-			console.log(  Math.max( s1, s2 ), Math.min( e1, e2 ) )
-
-		}
-
 
 		return lineTarget;
 
