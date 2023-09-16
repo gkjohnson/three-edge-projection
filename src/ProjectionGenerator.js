@@ -13,8 +13,8 @@ import {
 } from './utils/triangleLineUtils.js';
 import { generateEdges } from './utils/generateEdges.js';
 import { compressEdgeOverlaps, overlapsToLines } from './utils/overlapUtils.js';
-import { trimToBeneathTriPlane } from './utils/trimBeneathTriPlane.js';
-import { getOverlappingLine } from './utils/getOverlappingLine.js';
+import { trimToBeneathTriPlane } from './utils/trimToBeneathTriPlane.js';
+import { getProjectedLineOverlap } from './utils/getProjectedLineOverlap.js';
 import { appendOverlapRange } from './utils/getProjectedOverlaps.js';
 
 // these shared variables are not used across "yield" boundaries in the
@@ -221,7 +221,7 @@ export class ProjectionGenerator {
 					// compress the edge overlaps so we can easily tell if the whole edge is hidden already
 					// and exit early
 					if (
-						getOverlappingLine( _beneathLine, tri, _overlapLine ) &&
+						getProjectedLineOverlap( _beneathLine, tri, _overlapLine ) &&
 						appendOverlapRange( line, _overlapLine, hiddenOverlaps )
 					) {
 

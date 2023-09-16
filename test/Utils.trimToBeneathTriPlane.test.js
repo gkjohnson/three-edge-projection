@@ -1,8 +1,8 @@
 import { ExtendedTriangle } from 'three-mesh-bvh';
-import { trimToBeneathTriPlane } from '../src/utils/trimBeneathTriPlane.js';
+import { trimToBeneathTriPlane } from '../src/utils/trimToBeneathTriPlane.js';
 import { Vector3, Line3 } from 'three';
 
-describe( 'trimBeneathTriPlane', () => {
+describe( 'trimToBeneathTriPlane', () => {
 
 	it( 'should trim a line to beneath the triangle.', () => {
 

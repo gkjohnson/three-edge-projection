@@ -15,7 +15,7 @@ const _triDir = /* @__PURE__ */ new Vector3();
 
 // Returns the portion of the line that is overlapping the triangle when projected
 // TODO: rename this, remove need for tri update, plane
-export function getOverlappingLine( line, triangle, lineTarget = new Line3() ) {
+export function getProjectedLineOverlap( line, triangle, lineTarget = new Line3() ) {
 
 	// flatten the shapes
 	_tri.copy( triangle );

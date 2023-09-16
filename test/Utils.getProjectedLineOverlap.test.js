@@ -1,8 +1,8 @@
-import { getOverlappingLine } from '../src/utils/getOverlappingLine.js';
+import { getProjectedLineOverlap } from '../src/utils/getProjectedLineOverlap.js';
 import { ExtendedTriangle } from 'three-mesh-bvh';
 import { Vector3, Line3 } from 'three';
 
-describe( 'getOverlappingLine', () => {
+describe( 'getProjectedLineOverlap', () => {
 
 	it( 'should return portion of the line that overlaps on projection.', () => {
 
@@ -16,7 +16,7 @@ describe( 'getOverlappingLine', () => {
 		target = new Line3();
 		line = new Line3( new Vector3( 2, - 1, 0 ), new Vector3( - 2, 1, 0 ) );
 
-		expect( getOverlappingLine( line, triangle, target ) ).toBeTruthy();
+		expect( getProjectedLineOverlap( line, triangle, target ) ).toBeTruthy();
 		expect( [ ...target.start ] ).toEqual( [ 1, - 0.5, 0 ] );
 		expect( [ ...target.end ] ).toEqual( [ - 1, 0.5, 0 ] );
 
@@ -34,7 +34,7 @@ describe( 'getOverlappingLine', () => {
 		target = new Line3();
 		line = new Line3( new Vector3( 3, - 1, 0 ), new Vector3( 1, 1, 0 ) );
 
-		expect( getOverlappingLine( line, triangle, target ) ).toBeFalsy();
+		expect( getProjectedLineOverlap( line, triangle, target ) ).toBeFalsy();
 
 	} );
 
