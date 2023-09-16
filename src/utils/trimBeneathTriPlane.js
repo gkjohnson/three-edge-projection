@@ -26,31 +26,38 @@ export function trimToBeneathTriPlane( tri, line, lineTarget ) {
 	_plane.copy( tri.plane );
 	if ( _plane.normal.dot( UP_VECTOR ) < 0 ) {
 
-		if ( window.LOG) console.log('FLIPPED')
-
 		_plane.normal.multiplyScalar( - 1 );
 		_plane.constant *= - 1;
 
 	}
 
+	const startDist = _plane.distanceToPoint( line.start );
+	const endDist = _plane.distanceToPoint( line.end );
+	const isStartOnPlane = Math.abs( startDist ) < EPSILON;
+	const isEndOnPlane = Math.abs( endDist ) < EPSILON;
+
 	// if the line and plane are coplanar then return that we can't trim
 	line.delta( _lineDirection ).normalize();
 	if ( Math.abs( _plane.normal.dot( _lineDirection ) ) < EPSILON ) {
 
-		return false;
+		if ( isStartOnPlane ) {
+
+			return false;
+
+		} else {
+
+			lineTarget.copy( line );
+			return true;
+
+		}
 
 	}
 
 	// find the point that's below the plane. If both points are below the plane
 	// then we assume we're dealing with floating point error
-	const startDist = _plane.distanceToPoint( line.start );
-	const endDist = _plane.distanceToPoint( line.end );
-	const isStartOnPlane = Math.abs( startDist ) < EPSILON;
-	const isEndOnPlane = Math.abs( endDist ) < EPSILON;
 	const isStartBelow = startDist < 0;
 	const isEndBelow = endDist < 0;
 
-	if ( window.LOG ) console.log( isStartBelow, isEndBelow, startDist, endDist )
 	if ( isStartBelow && isEndBelow ) {
 
 		// if the whole line is below then just copy that
@@ -100,13 +107,6 @@ export function trimToBeneathTriPlane( tri, line, lineTarget ) {
 			}
 
 		}
-
-	}
-
-	if ( window.LOG ) {
-
-		console.log( isStartBelow, _plane.distanceToPoint( line.start ) );
-		console.log( isEndBelow, _plane.distanceToPoint( line.end ) );
 
 	}
 

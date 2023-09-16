@@ -14,7 +14,8 @@ import {
 import { generateEdges } from './utils/generateEdges.js';
 import { compressEdgeOverlaps, overlapsToLines } from './utils/overlapUtils.js';
 import { trimToBeneathTriPlane } from './utils/trimBeneathTriPlane.js';
-import { getProjectedOverlaps } from './utils/getProjectedOverlaps.js';
+import { getOverlappingLine } from './utils/getOverlappingLine.js';
+import { appendOverlapRange } from './utils/getProjectedOverlaps.js';
 
 // these shared variables are not used across "yield" boundaries in the
 // generator so there's no risk of overwriting another tasks data
@@ -23,6 +24,7 @@ const UP_VECTOR = /* @__PURE__ */ new Vector3( 0, 1, 0 );
 const _beneathLine = /* @__PURE__ */ new Line3();
 const _ray = /* @__PURE__ */ new Ray();
 const _vec = /* @__PURE__ */ new Vector3();
+const _overlapLine = /* @__PURE__ */ new Line3();
 
 class EdgeSet {
 
@@ -175,7 +177,7 @@ export class ProjectionGenerator {
 
 					// skip the triangle if the triangle is completely below the line
 					const highestTriangleY = Math.max( tri.a.y, tri.b.y, tri.c.y );
-					if ( highestTriangleY < lowestLineY ) {
+					if ( highestTriangleY <= lowestLineY ) {
 
 						return false;
 
@@ -213,8 +215,10 @@ export class ProjectionGenerator {
 
 					// compress the edge overlaps so we can easily tell if the whole edge is hidden already
 					// and exit early
-					// TODO: this needs to account for just the "beneath line" but the 0, 1 range needs to be relative to the original line
-					if ( getProjectedOverlaps( tri, line, hiddenOverlaps ) ) {
+					if (
+						getOverlappingLine( _beneathLine, tri, _overlapLine ) &&
+						appendOverlapRange( line, _overlapLine, hiddenOverlaps )
+					) {
 
 						compressEdgeOverlaps( hiddenOverlaps );
 

@@ -17,8 +17,6 @@ export function appendOverlapRange( line, overlapLine, overlapsTarget ) {
 	d0 = Math.min( Math.max( d0, 0 ), 1 );
 	d1 = Math.min( Math.max( d1, 0 ), 1 );
 
-	if ( window.LOG ) console.log( d0, d1, d0 - d1 );
-
 	if ( ! ( Math.abs( d0 - d1 ) <= DIST_EPSILON ) ) {
 
 		overlapsTarget.push( new Float32Array( [ d0, d1 ] ) );

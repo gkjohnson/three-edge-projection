@@ -130,8 +130,6 @@ export function getOverlappingLine( line, triangle, lineTarget = new Line3() ) {
 
 	}
 
-	// if ( window.LOG ) console.log('AREA')
-
 	return null;
 
 }
