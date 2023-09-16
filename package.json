@@ -7,7 +7,7 @@
     "start": "parcel serve ./example/*.html --dist-dir ./example/dev-bundle/ --no-hmr",
     "build-examples": "cd example && parcel build ./*.html --dist-dir ./bundle/ --public-url . --no-cache --no-content-hash",
     "lint": "eslint \"./src/**/*.js\" \"./example/*.js\"",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "cd test && jest"
   },
   "files": [
     "src/*"
@@ -43,11 +43,15 @@
   "devDependencies": {
     "three": "^0.155.0",
     "three-mesh-bvh": "^0.6.6",
-		"@typescript-eslint/eslint-plugin": "^4.33.0",
+    "@babel/core": "^7.15.5",
+    "@babel/preset-env": "^7.15.4",
+    "@types/jest": "^27.0.2",
+    "@typescript-eslint/eslint-plugin": "^4.33.0",
     "@typescript-eslint/parser": "^4.33.0",
     "eslint": "^7.32.0",
     "eslint-config-mdcs": "^5.0.0",
     "eslint-plugin-jest": "^23.20.0",
-    "parcel": "^2.9.3"
+    "parcel": "^2.9.3",
+    "jest": "^27.2.4"
   }
 }
