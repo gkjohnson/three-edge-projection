@@ -2,7 +2,6 @@ import { Vector3, Line3, Plane } from 'three';
 import { ExtendedTriangle } from 'three-mesh-bvh';
 
 const AREA_EPSILON = 1e-16;
-const COPLANAR_EPSILON = 1e-16;
 const DIST_EPSILON = 1e-16;
 const _orthoPlane = /* @__PURE__ */ new Plane();
 const _edgeLine = /* @__PURE__ */ new Line3();
@@ -139,6 +138,7 @@ export function getOverlappingLine( line, triangle, lineTarget = new Line3() ) {
 // // TODO: this expected to work for 3d lines, as well, but the logic does not align.
 // // This should be redesigned to work in 2d and return a 3d variation of the line
 // // based on relative scale
+// const COPLANAR_EPSILON = 1e-16;
 // const _line0 = /* @__PURE__ */ new Line3();
 // const _line1 = /* @__PURE__ */ new Line3();
 // const _dir0 = /* @__PURE__ */ new Vector3();
