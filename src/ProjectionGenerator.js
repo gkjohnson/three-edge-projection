@@ -13,7 +13,6 @@ import {
 } from './utils/triangleLineUtils.js';
 import { generateEdges } from './utils/generateEdges.js';
 import { compressEdgeOverlaps, overlapsToLines } from './utils/overlapUtils.js';
-import { isLineAbovePlane } from './utils/planeUtils.js';
 import { trimToBeneathTriPlane } from './utils/trimBeneathTriPlane.js';
 import { getProjectedOverlaps } from './utils/getProjectedOverlaps.js';
 
