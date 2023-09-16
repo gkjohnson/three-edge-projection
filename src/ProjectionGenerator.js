@@ -111,7 +111,7 @@ export class ProjectionGenerator {
 
 		if ( bvh instanceof BufferGeometry ) {
 
-			bvh = new MeshBVH( bvh );
+			bvh = new MeshBVH( bvh, { maxLeafTris: 1 } );
 
 		}
 
