@@ -57,7 +57,6 @@ export function trimToBeneathTriPlane( tri, line, lineTarget ) {
 
 	// find the point that's below the plane. If both points are below the plane
 	// then we assume we're dealing with floating point error
-
 	if ( isStartBelow && isEndBelow ) {
 
 		// if the whole line is below then just copy that

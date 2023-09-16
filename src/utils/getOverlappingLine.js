@@ -17,13 +17,6 @@ const _triDir = /* @__PURE__ */ new Vector3();
 // TODO: rename this, remove need for tri update, plane
 export function getOverlappingLine( line, triangle, lineTarget = new Line3() ) {
 
-	// if the line and triangle are not coplanar then return no overlap
-	if ( triangle.needsUpdate ) {
-
-		triangle.update();
-
-	}
-
 	// flatten the shapes
 	_tri.copy( triangle );
 	_tri.a.y = 0;
@@ -121,6 +114,7 @@ export function getOverlappingLine( line, triangle, lineTarget = new Line3() ) {
 			Math.max( s1, s2 ) / _line.distance(),
 			lineTarget.start,
 		);
+
 		line.at(
 			Math.min( e1, e2 ) / _line.distance(),
 			lineTarget.end,

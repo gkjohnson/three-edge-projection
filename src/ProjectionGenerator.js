@@ -142,6 +142,7 @@ export class ProjectionGenerator {
 			}
 
 			const lowestLineY = Math.min( line.start.y, line.end.y );
+			const highestLineY = Math.max( line.start.y, line.end.y );
 			const hiddenOverlaps = [];
 			bvh.shapecast( {
 
@@ -200,8 +201,12 @@ export class ProjectionGenerator {
 
 					// Retrieve the portion of line that is below the plane - and skip the triangle if none
 					// of it is
-					// TODO: we can skip this if we know the line is completely below the triangle
-					if ( ! trimToBeneathTriPlane( tri, line, _beneathLine ) ) {
+					const lowestTriangleY = Math.min( tri.a.y, tri.b.y, tri.c.y );
+					if ( highestLineY < lowestTriangleY ) {
+
+						_beneathLine.copy( line );
+
+					} else if ( ! trimToBeneathTriPlane( tri, line, _beneathLine ) ) {
 
 						return false;
 
