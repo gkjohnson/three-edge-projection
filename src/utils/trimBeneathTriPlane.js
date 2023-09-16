@@ -35,12 +35,14 @@ export function trimToBeneathTriPlane( tri, line, lineTarget ) {
 	const endDist = _plane.distanceToPoint( line.end );
 	const isStartOnPlane = Math.abs( startDist ) < EPSILON;
 	const isEndOnPlane = Math.abs( endDist ) < EPSILON;
+	const isStartBelow = startDist < 0;
+	const isEndBelow = endDist < 0;
 
 	// if the line and plane are coplanar then return that we can't trim
 	line.delta( _lineDirection ).normalize();
 	if ( Math.abs( _plane.normal.dot( _lineDirection ) ) < EPSILON ) {
 
-		if ( isStartOnPlane ) {
+		if ( isStartOnPlane || ! isStartBelow ) {
 
 			return false;
 
@@ -55,8 +57,6 @@ export function trimToBeneathTriPlane( tri, line, lineTarget ) {
 
 	// find the point that's below the plane. If both points are below the plane
 	// then we assume we're dealing with floating point error
-	const isStartBelow = startDist < 0;
-	const isEndBelow = endDist < 0;
 
 	if ( isStartBelow && isEndBelow ) {
 
