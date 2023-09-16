@@ -111,8 +111,6 @@ export function getOverlappingLine( line, triangle, lineTarget = new Line3() ) {
 		const separated1 = e1 <= s2;
 		const separated2 = e2 <= s1;
 
-		console.log(  );
-
 		if ( separated1 || separated2 ) {
 
 			return null;
