@@ -15,8 +15,7 @@ export function compressEdgeOverlaps( overlaps ) {
 
 		const overlap = overlaps[ i ];
 		const prevOverlap = overlaps[ i - 1 ];
-
-		if ( overlap[ 0 ] <= prevOverlap[ 1 ] ) {
+		if ( prevOverlap[ 1 ] >= overlap[ 0 ] ) {
 
 			prevOverlap[ 1 ] = Math.max( prevOverlap[ 1 ], overlap[ 1 ] );
 			overlaps.splice( i, 1 );

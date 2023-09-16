@@ -13,9 +13,9 @@ import {
 } from './utils/triangleLineUtils.js';
 import { generateEdges } from './utils/generateEdges.js';
 import { compressEdgeOverlaps, overlapsToLines } from './utils/overlapUtils.js';
-import { isLineAbovePlane } from './utils/planeUtils.js';
-import { trimToBeneathTriPlane } from './utils/trimBeneathTriPlane.js';
-import { getProjectedOverlaps } from './utils/getProjectedOverlaps.js';
+import { trimToBeneathTriPlane } from './utils/trimToBeneathTriPlane.js';
+import { getProjectedLineOverlap } from './utils/getProjectedLineOverlap.js';
+import { appendOverlapRange } from './utils/getProjectedOverlaps.js';
 
 // these shared variables are not used across "yield" boundaries in the
 // generator so there's no risk of overwriting another tasks data
@@ -24,6 +24,7 @@ const UP_VECTOR = /* @__PURE__ */ new Vector3( 0, 1, 0 );
 const _beneathLine = /* @__PURE__ */ new Line3();
 const _ray = /* @__PURE__ */ new Ray();
 const _vec = /* @__PURE__ */ new Vector3();
+const _overlapLine = /* @__PURE__ */ new Line3();
 
 class EdgeSet {
 
@@ -110,7 +111,7 @@ export class ProjectionGenerator {
 
 		if ( bvh instanceof BufferGeometry ) {
 
-			bvh = new MeshBVH( bvh );
+			bvh = new MeshBVH( bvh, { maxLeafTris: 1 } );
 
 		}
 
@@ -141,6 +142,7 @@ export class ProjectionGenerator {
 			}
 
 			const lowestLineY = Math.min( line.start.y, line.end.y );
+			const highestLineY = Math.max( line.start.y, line.end.y );
 			const hiddenOverlaps = [];
 			bvh.shapecast( {
 
@@ -174,9 +176,9 @@ export class ProjectionGenerator {
 
 				intersectsTriangle: tri => {
 
-					// skip the triangle if it is completely below the line
+					// skip the triangle if the triangle is completely below the line
 					const highestTriangleY = Math.max( tri.a.y, tri.b.y, tri.c.y );
-					if ( highestTriangleY < lowestLineY ) {
+					if ( highestTriangleY <= lowestLineY ) {
 
 						return false;
 
@@ -197,11 +199,14 @@ export class ProjectionGenerator {
 
 					}
 
-					// Check how much of the line is below the plane and skip it if
-					// the line is completely above the plane or a miniscule amount is below
-					trimToBeneathTriPlane( tri, line, _beneathLine );
+					// Retrieve the portion of line that is below the plane - and skip the triangle if none
+					// of it is
+					const lowestTriangleY = Math.min( tri.a.y, tri.b.y, tri.c.y );
+					if ( highestLineY < lowestTriangleY ) {
 
-					if ( isLineAbovePlane( tri.plane, _beneathLine ) ) {
+						_beneathLine.copy( line );
+
+					} else if ( ! trimToBeneathTriPlane( tri, line, _beneathLine ) ) {
 
 						return false;
 
@@ -215,8 +220,10 @@ export class ProjectionGenerator {
 
 					// compress the edge overlaps so we can easily tell if the whole edge is hidden already
 					// and exit early
-					// TODO: this needs to account for just the "beneath line" but the 0, 1 range needs to be relative to the original line
-					if ( getProjectedOverlaps( tri, line, hiddenOverlaps ) ) {
+					if (
+						getProjectedLineOverlap( _beneathLine, tri, _overlapLine ) &&
+						appendOverlapRange( line, _overlapLine, hiddenOverlaps )
+					) {
 
 						compressEdgeOverlaps( hiddenOverlaps );
 
