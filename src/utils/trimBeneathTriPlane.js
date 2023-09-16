@@ -26,6 +26,8 @@ export function trimToBeneathTriPlane( tri, line, lineTarget ) {
 	_plane.copy( tri.plane );
 	if ( _plane.normal.dot( UP_VECTOR ) < 0 ) {
 
+		if ( window.LOG) console.log('FLIPPED')
+
 		_plane.normal.multiplyScalar( - 1 );
 		_plane.constant *= - 1;
 
@@ -41,8 +43,14 @@ export function trimToBeneathTriPlane( tri, line, lineTarget ) {
 
 	// find the point that's below the plane. If both points are below the plane
 	// then we assume we're dealing with floating point error
-	const isStartBelow = _plane.distanceToPoint( line.start ) < 0;
-	const isEndBelow = _plane.distanceToPoint( line.end ) < 0;
+	const startDist = _plane.distanceToPoint( line.start );
+	const endDist = _plane.distanceToPoint( line.end );
+	const isStartOnPlane = Math.abs( startDist ) < EPSILON;
+	const isEndOnPlane = Math.abs( endDist ) < EPSILON;
+	const isStartBelow = startDist < 0;
+	const isEndBelow = endDist < 0;
+
+	if ( window.LOG ) console.log( isStartBelow, isEndBelow, startDist, endDist )
 	if ( isStartBelow && isEndBelow ) {
 
 		// if the whole line is below then just copy that
@@ -54,21 +62,51 @@ export function trimToBeneathTriPlane( tri, line, lineTarget ) {
 		// if it's wholly above then skip it
 		return false;
 
-	} else if ( _plane.intersectLine( line, _planeHit ) ) {
+	} else {
 
-		if ( isStartBelow ) {
+		let didHit = _plane.intersectLine( line, _planeHit );
+		if ( ! didHit ) {
 
-			lineTarget.start.copy( line.start );
-			lineTarget.end.copy( _planeHit );
-			return true;
+			if ( isStartOnPlane ) {
 
-		} else if ( isEndBelow ) {
+				_planeHit.copy( line.start );
+				didHit = true;
 
-			lineTarget.end.copy( line.end );
-			lineTarget.start.copy( _planeHit );
-			return true;
+			}
+
+			if ( isEndOnPlane ) {
+
+				_planeHit.copy( line.end );
+				didHit = true;
+
+			}
 
 		}
+
+		if ( didHit ) {
+
+			if ( isStartBelow ) {
+
+				lineTarget.start.copy( line.start );
+				lineTarget.end.copy( _planeHit );
+				return true;
+
+			} else if ( isEndBelow ) {
+
+				lineTarget.end.copy( line.end );
+				lineTarget.start.copy( _planeHit );
+				return true;
+
+			}
+
+		}
+
+	}
+
+	if ( window.LOG ) {
+
+		console.log( isStartBelow, _plane.distanceToPoint( line.start ) );
+		console.log( isEndBelow, _plane.distanceToPoint( line.end ) );
 
 	}
 

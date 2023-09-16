@@ -37,4 +37,5 @@ describe( 'getOverlappingLine', () => {
 		expect( getOverlappingLine( line, triangle, target ) ).toBeFalsy();
 
 	} );
+
 } );
