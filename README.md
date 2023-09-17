@@ -4,7 +4,34 @@ Edge projection system based on [three-mesh-bvh](https://github.com/gkjohnson/th
 
 # Examples
 
-TODO
+**Using generator function**
+
+More granular API with control over when edge trimming work happens.
+
+```js
+const generator = new ProjectionGenerator();
+const task = generator.generate( geometry );
+let result = task.next();
+while ( ! result.done ) {
+
+  result = task.next();
+
+}
+
+const lines = new LineSegments( result.value, new LineBasicMaterial( { color: 0 } ) );
+scene.add( lines );
+```
+
+**Using async function**
+
+Simpler API with less control over when the work happens.
+
+```js
+const generator = new ProjectionGenerator();
+const geometry = await generator.generateAsync( geometry );
+const lines = new LineSegments( result.value, new LineBasicMaterial( { color: 0 } ) );
+scene.add( lines );
+```
 
 # Use
 
