@@ -30,7 +30,8 @@ onmessage = function ( { data } ) {
 
 		const generator = new ProjectionGenerator();
 		generator.sortEdges = options.sortEdges ?? generator.sortEdges;
-		generator.angleThreshold = options.angleThreshold ?? options.angleThreshold;
+		generator.angleThreshold = options.angleThreshold ?? generator.angleThreshold;
+		generator.includeIntersectionEdges = options.includeIntersectionEdges ?? generator.includeIntersectionEdges;
 
 		const task = generator.generate( geometry, {
 			onProgress: onProgressCallback,

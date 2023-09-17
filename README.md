@@ -61,6 +61,16 @@ How long to spend trimming edges before yielding.
 angleThreshold = 50 : Number
 ```
 
+TODO
+
+### .includeIntersectionEdges
+
+```js
+includeIntersectionEdges = false : Boolean
+```
+
+TODO
+
 ### .generate
 
 ```js

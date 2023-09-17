@@ -16,6 +16,7 @@ import { compressEdgeOverlaps, overlapsToLines } from './utils/overlapUtils.js';
 import { trimToBeneathTriPlane } from './utils/trimToBeneathTriPlane.js';
 import { getProjectedLineOverlap } from './utils/getProjectedLineOverlap.js';
 import { appendOverlapRange } from './utils/getProjectedOverlaps.js';
+import { generateIntersectionEdges } from './utils/generateIntersectionEdges.js';
 
 // these shared variables are not used across "yield" boundaries in the
 // generator so there's no risk of overwriting another tasks data
@@ -67,6 +68,7 @@ export class ProjectionGenerator {
 		this.sortEdges = true;
 		this.iterationTime = 30;
 		this.angleThreshold = 50;
+		this.includeIntersectionEdges = false;
 
 	}
 
@@ -107,7 +109,7 @@ export class ProjectionGenerator {
 	*generate( bvh, options = {} ) {
 
 		const { onProgress } = options;
-		const { sortEdges, iterationTime, angleThreshold } = this;
+		const { sortEdges, iterationTime, angleThreshold, includeIntersectionEdges } = this;
 
 		if ( bvh instanceof BufferGeometry ) {
 
@@ -116,7 +118,13 @@ export class ProjectionGenerator {
 		}
 
 		const geometry = bvh.geometry;
-		const edges = generateEdges( geometry, UP_VECTOR, angleThreshold );
+		let edges = generateEdges( geometry, UP_VECTOR, angleThreshold );
+		if ( includeIntersectionEdges ) {
+
+			edges = edges.concat( generateIntersectionEdges( bvh ) );
+
+		}
+
 		if ( sortEdges ) {
 
 			edges.sort( ( a, b ) => {
