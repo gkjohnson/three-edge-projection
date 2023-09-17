@@ -26,6 +26,7 @@ const params = {
 	displayEdges: false,
 	displayProjection: true,
 	sortEdges: true,
+	includeIntersectionEdges: false,
 	useWorker: false,
 	rotate: () => {
 
@@ -168,6 +169,7 @@ async function init() {
 	gui.add( params, 'displayEdges' );
 	gui.add( params, 'displayProjection' );
 	gui.add( params, 'sortEdges' );
+	gui.add( params, 'includeIntersectionEdges' );
 	gui.add( params, 'useWorker' );
 	gui.add( params, 'rotate' );
 	gui.add( params, 'regenerate' );
@@ -233,6 +235,7 @@ function* updateEdges( runTime = 30 ) {
 		generator.sortEdges = params.sortEdges;
 		generator.iterationTime = runTime;
 		generator.angleThreshold = ANGLE_THRESHOLD;
+		generator.includeIntersectionEdges = params.includeIntersectionEdges;
 
 		const task = generator.generate( mergedGeometry, {
 
@@ -266,6 +269,7 @@ function* updateEdges( runTime = 30 ) {
 		worker
 			.generate( mergedGeometry, {
 				sortEdges: params.sortEdges,
+				includeIntersectionEdges: params.includeIntersectionEdges,
 				onProgress: p => {
 
 					outputContainer.innerText = `processing: ${ parseFloat( ( p * 100 ).toFixed( 2 ) ) }%`;
