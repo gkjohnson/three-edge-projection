@@ -165,7 +165,12 @@ async function init() {
 	controls = new OrbitControls( camera, renderer.domElement );
 
 	gui = new GUI();
-	gui.add( params, 'displayModel', [ 'none', 'color', 'shaded white', 'white' ] );
+	gui.add( params, 'displayModel', [
+		'none',
+		'color',
+		'shaded white',
+		// 'white',
+	] );
 	// gui.add( params, 'displayEdges' );
 	gui.add( params, 'displayProjection' );
 	gui.add( params, 'sortEdges' );
