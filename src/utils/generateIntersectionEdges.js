@@ -32,6 +32,7 @@ export function generateIntersectionEdges( bvh ) {
 		b.fromBufferAttribute( posAttr, i1 );
 		c.fromBufferAttribute( posAttr, i2 );
 		_tri.needsUpdate = true;
+		_tri.update();
 
 		bvh.shapecast( {
 
