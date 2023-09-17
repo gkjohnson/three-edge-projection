@@ -6,7 +6,6 @@
 [![twitter](https://flat.badgen.net/badge/twitter/@garrettkjohnson/?icon&label)](https://twitter.com/garrettkjohnson)
 [![sponsors](https://img.shields.io/github/sponsors/gkjohnson?style=flat-square&color=1da1f2)](https://github.com/sponsors/gkjohnson/)
 
-
 Edge projection system based on [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh/) to extract visible projected lines along the y-axis.
 
 # Examples
@@ -109,10 +108,9 @@ async generateAsync(
 
 Generate the geometry with a promise-style API.
 
-<!--
 ## SilhouetteGenerator
 
-Used for generating a projected silhouette of a geometry - not very stable.
+Used for generating a projected silhouette of a geometry using the [clipper2-js](https://www.npmjs.com/package/clipper2-js) project. Performing these operations can be extremely slow with more complex geometry and not always yield a stable result.
 
 ### .iterationTime
 
@@ -156,4 +154,4 @@ async generateAsync(
 ```
 
 Generate the silhouette geometry with a promise-style API.
--->
+
