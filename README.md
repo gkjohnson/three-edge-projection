@@ -1,14 +1,23 @@
 # three-edge-projection
 
+
+[![build](https://img.shields.io/github/actions/workflow/status/gkjohnson/three-edge-projection/node.js.yml?style=flat-square&label=build&branch=main)](https://github.com/gkjohnson/three-edge-projection/actions)
+[![github](https://flat.badgen.net/badge/icon/github?icon=github&label)](https://github.com/gkjohnson/three-edge-projection/)
+[![twitter](https://flat.badgen.net/badge/twitter/@garrettkjohnson/?icon&label)](https://twitter.com/garrettkjohnson)
+[![sponsors](https://img.shields.io/github/sponsors/gkjohnson?style=flat-square&color=1da1f2)](https://github.com/sponsors/gkjohnson/)
+
+
 Edge projection system based on [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh/) to extract visible projected lines along the y-axis.
 
 # Examples
 
-TODO
+[Floor projection](https://gkjohnson.github.io/three-edge-projection/example/bundle/edgeProjection.html)
 
 # Use
 
 **Generator**
+
+More granular API with control over when edge trimming work happens.
 
 ```js
 const generator = new ProjectionGenerator();
@@ -21,11 +30,13 @@ while ( ! result.done ) {
 
 }
 
-const mesh = new Mesh( result.value, material );
-scene.add( mesh );
+const lines = new LineSegments( result.value, material );
+scene.add( lines );
 ```
 
 **Promise**
+
+Simpler API with less control over when the work happens.
 
 ```js
 const generator = new ProjectionGenerator();
@@ -61,7 +72,7 @@ How long to spend trimming edges before yielding.
 angleThreshold = 50 : Number
 ```
 
-TODO
+The threshold angle in degrees at which edges are generated.
 
 ### .includeIntersectionEdges
 
@@ -69,7 +80,7 @@ TODO
 includeIntersectionEdges = false : Boolean
 ```
 
-TODO
+Whether to generate edges representing the intersections between triangles.
 
 ### .generate
 
