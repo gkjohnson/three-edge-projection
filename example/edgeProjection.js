@@ -296,7 +296,7 @@ function* updateEdges( runTime = 30 ) {
 	projection.geometry = geometry;
 	outputContainer.innerText =
 		`merge geometry  : ${ mergeTime.toFixed( 2 ) }ms\n` +
-		`edge trimming   : ${ trimTime.toFixed( 2 ) }ms\n\n`;
+		`edge trimming   : ${ trimTime.toFixed( 2 ) }ms`;
 
 }
 
