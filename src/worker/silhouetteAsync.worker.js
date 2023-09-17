@@ -1,5 +1,5 @@
 import { BufferAttribute, BufferGeometry } from 'three';
-import { ProjectionGenerator } from '../ProjectionGenerator.js';
+import { SilhouetteGenerator } from '../SilhouetteGenerator.js';
 
 onmessage = function ( { data } ) {
 
@@ -28,10 +28,8 @@ onmessage = function ( { data } ) {
 		geometry.setIndex( new BufferAttribute( index, 1, false ) );
 		geometry.setAttribute( 'position', new BufferAttribute( position, 3, false ) );
 
-		const generator = new ProjectionGenerator();
-		generator.sortEdges = options.sortEdges ?? generator.sortEdges;
-		generator.angleThreshold = options.angleThreshold ?? options.angleThreshold;
-
+		const generator = new SilhouetteGenerator();
+		generator.doubleSided = options.doubleSided ?? generator.doubleSided;
 		const task = generator.generate( geometry, {
 			onProgress: onProgressCallback,
 		} );

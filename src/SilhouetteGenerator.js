@@ -1,9 +1,9 @@
 import { Path64, Clipper, FillRule } from 'clipper2-js';
-import { ShapeGeometry, Vector3, Shape, Vector2 } from 'three';
+import { ShapeGeometry, Vector3, Shape, Vector2, Triangle } from 'three';
 
-const _v0 = /* @__PURE__ */ new Vector3();
-const _v1 = /* @__PURE__ */ new Vector3();
-const _v2 = /* @__PURE__ */ new Vector3();
+const UP_VECTOR = /* @__PURE__ */ new Vector3( 0, 1, 0 );
+const _tri = /* @__PURE__ */ new Triangle();
+const _normal = /* @__PURE__ */ new Vector3();
 function compressPoints( path ) {
 
 	for ( let i = 0, l = path.length; i < l; i ++ ) {
@@ -26,31 +26,29 @@ function compressPoints( path ) {
 
 function isHole( path ) {
 
-	const dir = new Vector2();
+	// https://stackoverflow.com/questions/1165647/how-to-determine-if-a-list-of-polygon-points-are-in-clockwise-order
 	let tot = 0;
 	for ( let i = 0, l = path.length; i < l; i ++ ) {
 
 		const ni = ( i + 1 ) % l;
-		const v0 = path[ i ];
-		const v1 = path[ ni ];
+		const v0 = path[ i ].clone();
+		const v1 = path[ ni ].clone();
 
-		const angle = v1.angleTo( v0 );
-		const wind = dir.subVectors( v0, v1 ).cross( v0 );
-		tot += angle * Math.sign( wind );
+		tot += ( v1.x - v0.x ) * ( v1.y + v0.y );
 
 	}
 
-	return tot < Math.PI;
+	return tot > 0;
 
 }
-
 
 export class SilhouetteGenerator {
 
 	constructor() {
 
 		this.iterationTime = 30;
-		this.intScalar = 1e6;
+		this.intScalar = 1e9;
+		this.doubleSided = true;
 
 	}
 
@@ -90,7 +88,7 @@ export class SilhouetteGenerator {
 
 	*generate( geometry, options = {} ) {
 
-		const { iterationTime, intScalar } = this;
+		const { iterationTime, intScalar, doubleSided } = this;
 		const { onProgress } = options;
 
 		const index = geometry.index;
@@ -114,22 +112,34 @@ export class SilhouetteGenerator {
 
 			}
 
-			_v0.fromBufferAttribute( posAttr, i0 );
-			_v1.fromBufferAttribute( posAttr, i1 );
-			_v2.fromBufferAttribute( posAttr, i2 );
+			const { a, b, c } = _tri;
+			a.fromBufferAttribute( posAttr, i0 );
+			b.fromBufferAttribute( posAttr, i1 );
+			c.fromBufferAttribute( posAttr, i2 );
+			if ( ! doubleSided ) {
 
-			_v0.y = 0;
-			_v1.y = 0;
-			_v2.y = 0;
+				_tri.getNormal( _normal );
+				if ( _normal.dot( UP_VECTOR ) > 0 ) {
 
-			nx = Math.min( nx, _v0.x, _v1.x, _v2.x );
-			nz = Math.max( nz, _v0.z, _v1.z, _v2.z );
+					continue;
+
+				}
+
+			}
+
+
+			a.y = 0;
+			b.y = 0;
+			c.y = 0;
+
+			nx = Math.min( nx, a.x, b.x, c.x );
+			nz = Math.max( nz, a.z, b.z, c.z );
 
 			const path = new Path64();
 			path.push( Clipper.makePath( [
-				_v0.x * intScalar, _v0.z * intScalar,
-				_v1.x * intScalar, _v1.z * intScalar,
-				_v2.x * intScalar, _v2.z * intScalar,
+				a.x * intScalar, a.z * intScalar,
+				b.x * intScalar, b.z * intScalar,
+				c.x * intScalar, c.z * intScalar,
 			] ) );
 
 			if ( overallPath === null ) {
@@ -160,22 +170,31 @@ export class SilhouetteGenerator {
 
 		}
 
-		const points = overallPath.map( arr => {
+		const vector2s = overallPath
+			.map( points =>
+				points.flatMap( v => new Vector2( v.x / intScalar, v.y / intScalar ) )
+			);
 
-			return arr.flatMap( v => new Vector2( v.x / intScalar, v.y / intScalar ) );
+		const holesShapes = vector2s
+			.filter( p => isHole( p ) )
+			.map( p => new Shape( p ) );
 
-		} );
+		const solidShapes = vector2s
+			.filter( p => ! isHole( p ) )
+			.map( p => {
 
-		const holesShapes = points.filter( p => isHole( p ) ).map( p => new Shape( p ) );
-		const solidShapes = points.filter( p => ! isHole( p ) ).map( p => {
+				const shape = new Shape( p );
+				shape.holes = holesShapes;
+				return shape;
 
-			const shape = new Shape( p );
-			shape.holes = holesShapes;
-			return shape;
+			} );
 
-		} );
+		window.HOLES = holesShapes;
+		window.SOLIDS = solidShapes;
 
-		return solidShapes.map( s => new ShapeGeometry( s ).rotateX( - Math.PI / 2 ) );
+		const result = new ShapeGeometry( solidShapes[ 0 ] ).rotateX( Math.PI / 2 );
+		result.index.array.reverse();
+		return result;
 
 	}
 
