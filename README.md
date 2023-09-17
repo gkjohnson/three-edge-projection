@@ -61,7 +61,7 @@ How long to spend trimming edges before yielding.
 angleThreshold = 50 : Number
 ```
 
-TODO
+The threshold angle in degrees at which edges are generated.
 
 ### .includeIntersectionEdges
 
@@ -69,7 +69,7 @@ TODO
 includeIntersectionEdges = false : Boolean
 ```
 
-TODO
+Whether to generate edges representing the intersections between triangles.
 
 ### .generate
 
