@@ -50,7 +50,7 @@ Whether to sort edges along the Y axis before iterating over the edges.
 ### .iterationTime
 
 ```js
-iterationTime = 10 : Number
+iterationTime = 30 : Number
 ```
 
 How long to spend trimming edges before yielding.
@@ -72,7 +72,7 @@ angleThreshold = 50 : Number
 ) : BufferGeometry
 ```
 
-Generate the geometry using a generator function.
+Generate the edge geometry using a generator function.
 
 ### .generateAsync
 
@@ -87,3 +87,52 @@ async generateAsync(
 ```
 
 Generate the geometry with a promise-style API.
+
+<!--
+## SilhouetteGenerator
+
+Used for generating a projected silhouette of a geometry - not very stable.
+
+### .iterationTime
+
+```js
+iterationTime = 10 : Number
+```
+
+How long to spend trimming edges before yielding.
+
+### .doubleSided
+
+```js
+doubleSided = false : Boolean
+```
+
+If `false` then only the triangles facing upwards are included in the silhouette.
+
+### .generate
+
+```js
+*generate(
+	geometry : BufferGeometry,
+	options : {
+		onProgress: ( percent : Number ) => void,
+	}
+) : BufferGeometry
+```
+
+Generate the geometry using a generator function.
+
+### .generateAsync
+
+```js
+async generateAsync(
+	geometry : BufferGeometry,
+	options : {
+		onProgress: ( percent : Number ) => void,
+		signal: AbortSignal,
+	}
+) : BufferGeometry
+```
+
+Generate the silhouette geometry with a promise-style API.
+-->

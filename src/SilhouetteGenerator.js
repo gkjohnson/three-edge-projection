@@ -127,7 +127,6 @@ export class SilhouetteGenerator {
 
 			}
 
-
 			a.y = 0;
 			b.y = 0;
 			c.y = 0;
@@ -189,10 +188,7 @@ export class SilhouetteGenerator {
 
 			} );
 
-		window.HOLES = holesShapes;
-		window.SOLIDS = solidShapes;
-
-		const result = new ShapeGeometry( solidShapes[ 0 ] ).rotateX( Math.PI / 2 );
+		const result = new ShapeGeometry( solidShapes ).rotateX( Math.PI / 2 );
 		result.index.array.reverse();
 		return result;
 
