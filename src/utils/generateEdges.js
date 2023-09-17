@@ -1,13 +1,13 @@
 import { Vector3, Triangle, Line3, MathUtils } from 'three';
 
 // Modified version of js EdgesGeometry logic to handle silhouette edges
+const EPSILON = 1e-16;
 const UP_VECTOR = /* @__PURE__ */ new Vector3( 0, 1, 0 );
 const _v0 = /* @__PURE__ */ new Vector3();
 const _v1 = /* @__PURE__ */ new Vector3();
 const _normal = /* @__PURE__ */ new Vector3();
 const _triangle = /* @__PURE__ */ new Triangle();
 
-// TODO: find edges defined by triangle intersections
 export function generateEdges( geometry, projectionDir = UP_VECTOR, thresholdAngle = 1 ) {
 
 	const edges = [];
@@ -78,7 +78,16 @@ export function generateEdges( geometry, projectionDir = UP_VECTOR, thresholdAng
 				// it meets the angle threshold and delete the edge from the map.
 				const otherNormal = edgeData[ reverseHash ].normal;
 				const meetsThreshold = _normal.dot( otherNormal ) <= thresholdDot;
-				const projectionThreshold = Math.sign( projectionDir.dot( _normal ) ) !== Math.sign( projectionDir.dot( otherNormal ) );
+
+				// get the dot product relative to the projection angle and
+				// add an epsilon for nearly vertical triangles
+				let normDot = projectionDir.dot( _normal );
+				normDot = Math.abs( normDot ) < EPSILON ? 0 : normDot;
+
+				let otherDot = projectionDir.dot( otherNormal );
+				otherDot = Math.abs( otherDot ) < EPSILON ? 0 : otherDot;
+
+				const projectionThreshold = Math.sign( normDot ) !== Math.sign( otherDot );
 				if ( meetsThreshold || projectionThreshold ) {
 
 					const line = new Line3();
