@@ -72,7 +72,7 @@ export class ProjectionGenerator {
 
 	}
 
-	generateAsync( geometry, options ) {
+	generateAsync( geometry, options = {} ) {
 
 		return new Promise( ( resolve, reject ) => {
 
@@ -82,7 +82,7 @@ export class ProjectionGenerator {
 
 			function run() {
 
-				if ( signal.aborted ) {
+				if ( signal && signal.aborted ) {
 
 					reject( new Error( 'ProjectionGenerator: Process aborted via AbortSignal.' ) );
 

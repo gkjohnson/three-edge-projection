@@ -1,9 +1,13 @@
 import { Path64, Clipper, FillRule } from 'clipper2-js';
 import { ShapeGeometry, Vector3, Shape, Vector2, Triangle } from 'three';
 
+const AREA_EPSILON = 1e-8;
 const UP_VECTOR = /* @__PURE__ */ new Vector3( 0, 1, 0 );
 const _tri = /* @__PURE__ */ new Triangle();
 const _normal = /* @__PURE__ */ new Vector3();
+const _center = /* @__PURE__ */ new Vector3();
+const _vec = /* @__PURE__ */ new Vector3();
+
 function compressPoints( path ) {
 
 	for ( let i = 0, l = path.length; i < l; i ++ ) {
@@ -48,11 +52,11 @@ export class SilhouetteGenerator {
 
 		this.iterationTime = 30;
 		this.intScalar = 1e9;
-		this.doubleSided = true;
+		this.doubleSided = false;
 
 	}
 
-	generateAsync( geometry, options ) {
+	generateAsync( geometry, options = {} ) {
 
 		return new Promise( ( resolve, reject ) => {
 
@@ -62,7 +66,7 @@ export class SilhouetteGenerator {
 
 			function run() {
 
-				if ( signal.aborted ) {
+				if ( signal && signal.aborted ) {
 
 					reject( new Error( 'SilhouetteGenerator: Process aborted via AbortSignal.' ) );
 
@@ -90,12 +94,12 @@ export class SilhouetteGenerator {
 
 		const { iterationTime, intScalar, doubleSided } = this;
 		const { onProgress } = options;
+		const power = Math.log10( intScalar );
+		const extendMultiplier = Math.pow( 10, - ( power - 1 ) );
 
 		const index = geometry.index;
 		const posAttr = geometry.attributes.position;
 		const vertCount = index ? index.count : posAttr.count;
-		let nx = 0;
-		let nz = 0;
 		let overallPath = null;
 
 		let time = performance.now();
@@ -112,6 +116,7 @@ export class SilhouetteGenerator {
 
 			}
 
+			// get the triangle
 			const { a, b, c } = _tri;
 			a.fromBufferAttribute( posAttr, i0 );
 			b.fromBufferAttribute( posAttr, i1 );
@@ -127,13 +132,34 @@ export class SilhouetteGenerator {
 
 			}
 
+			// flatten the triangle
 			a.y = 0;
 			b.y = 0;
 			c.y = 0;
 
-			nx = Math.min( nx, a.x, b.x, c.x );
-			nz = Math.max( nz, a.z, b.z, c.z );
+			if ( _tri.getArea() < AREA_EPSILON ) {
 
+				continue;
+
+			}
+
+			// expand the triangle by a small degree to ensure overlap
+			_center
+				.copy( a )
+				.add( b )
+				.add( c )
+				.multiplyScalar( 1 / 3 );
+
+			_vec.subVectors( a, _center ).normalize();
+			a.addScaledVector( _vec, extendMultiplier );
+
+			_vec.subVectors( b, _center ).normalize();
+			b.addScaledVector( _vec, extendMultiplier );
+
+			_vec.subVectors( c, _center ).normalize();
+			c.addScaledVector( _vec, extendMultiplier );
+
+			// create the path
 			const path = new Path64();
 			path.push( Clipper.makePath( [
 				a.x * intScalar, a.z * intScalar,
@@ -141,6 +167,7 @@ export class SilhouetteGenerator {
 				c.x * intScalar, c.z * intScalar,
 			] ) );
 
+			// perform union
 			if ( overallPath === null ) {
 
 				overallPath = path;
