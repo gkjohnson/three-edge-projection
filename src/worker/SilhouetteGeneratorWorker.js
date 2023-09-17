@@ -62,7 +62,8 @@ export class SilhouetteGeneratorWorker {
 				} else if ( data.result ) {
 
 					const geometry = new BufferGeometry();
-					geometry.setAttribute( 'position', new BufferAttribute( data.result, 3, false ) );
+					geometry.setAttribute( 'position', new BufferAttribute( data.result.position, 3, false ) );
+					geometry.setIndex( new BufferAttribute( data.result.index, 1, false ) );
 					resolve( geometry );
 					worker.onmessage = null;
 

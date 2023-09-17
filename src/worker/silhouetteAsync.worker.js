@@ -41,14 +41,18 @@ onmessage = function ( { data } ) {
 
 		}
 
-		const resultLines = result.value.attributes.position.array;
+		const posArr = result.value.attributes.position.array;
+		const indexArr = result.value.index.array;
 		postMessage( {
 
-			result: resultLines,
+			result: {
+				position: posArr,
+				index: indexArr,
+			},
 			error: null,
 			progress: 1,
 
-		}, [ resultLines.buffer ] );
+		}, [ posArr.buffer, indexArr.buffer ] );
 
 	} catch ( error ) {
 

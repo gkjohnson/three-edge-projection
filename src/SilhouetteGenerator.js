@@ -95,7 +95,7 @@ export class SilhouetteGenerator {
 		const { iterationTime, intScalar, doubleSided } = this;
 		const { onProgress } = options;
 		const power = Math.log10( intScalar );
-		const extendMultiplier = Math.pow( 10, - ( power - 1 ) );
+		const extendMultiplier = Math.pow( 10, - ( power - 2 ) );
 
 		const index = geometry.index;
 		const posAttr = geometry.attributes.position;
