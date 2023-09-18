@@ -101,13 +101,13 @@ Generate the edge geometry using a generator function.
 ### .generateAsync
 
 ```js
-async generateAsync(
+generateAsync(
 	geometry : MeshBVH | BufferGeometry,
 	options : {
 		onProgress: ( percent : Number ) => void,
 		signal: AbortSignal,
 	}
-) : BufferGeometry
+) : Promise<BufferGeometry>
 ```
 
 Generate the geometry with a promise-style API.
@@ -148,13 +148,13 @@ Generate the geometry using a generator function.
 ### .generateAsync
 
 ```js
-async generateAsync(
+generateAsync(
 	geometry : BufferGeometry,
 	options : {
 		onProgress: ( percent : Number ) => void,
 		signal: AbortSignal,
 	}
-) : BufferGeometry
+) : Promise<BufferGeometry>
 ```
 
 Generate the silhouette geometry with a promise-style API.
