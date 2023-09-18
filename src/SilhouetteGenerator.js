@@ -1,5 +1,5 @@
 import { Path64, Clipper, FillRule } from 'clipper2-js';
-import { ShapeGeometry, Vector3, Shape, Vector2, Triangle } from 'three';
+import { ShapeGeometry, Vector3, Shape, Vector2, Triangle, ShapeUtils } from 'three';
 
 const AREA_EPSILON = 1e-8;
 const UP_VECTOR = /* @__PURE__ */ new Vector3( 0, 1, 0 );
@@ -16,11 +16,11 @@ function convertPathToGeometry( path, scale ) {
 		);
 
 	const holesShapes = vector2s
-		.filter( p => isHole( p ) )
+		.filter( p => ShapeUtils.isClockWise( p ) )
 		.map( p => new Shape( p ) );
 
 	const solidShapes = vector2s
-		.filter( p => ! isHole( p ) )
+		.filter( p => ! ShapeUtils.isClockWise( p ) )
 		.map( p => {
 
 			const shape = new Shape( p );
@@ -52,24 +52,6 @@ function compressPoints( path ) {
 		}
 
 	}
-
-}
-
-function isHole( path ) {
-
-	// https://stackoverflow.com/questions/1165647/how-to-determine-if-a-list-of-polygon-points-are-in-clockwise-order
-	let tot = 0;
-	for ( let i = 0, l = path.length; i < l; i ++ ) {
-
-		const ni = ( i + 1 ) % l;
-		const v0 = path[ i ].clone();
-		const v1 = path[ ni ].clone();
-
-		tot += ( v1.x - v0.x ) * ( v1.y + v0.y );
-
-	}
-
-	return tot > 0;
 
 }
 
