@@ -8,6 +8,33 @@ const _normal = /* @__PURE__ */ new Vector3();
 const _center = /* @__PURE__ */ new Vector3();
 const _vec = /* @__PURE__ */ new Vector3();
 
+function convertPathToGeometry( path, scale ) {
+
+	const vector2s = path
+		.map( points =>
+			points.flatMap( v => new Vector2( v.x / scale, v.y / scale ) )
+		);
+
+	const holesShapes = vector2s
+		.filter( p => isHole( p ) )
+		.map( p => new Shape( p ) );
+
+	const solidShapes = vector2s
+		.filter( p => ! isHole( p ) )
+		.map( p => {
+
+			const shape = new Shape( p );
+			shape.holes = holesShapes;
+			return shape;
+
+		} );
+
+	const result = new ShapeGeometry( solidShapes ).rotateX( Math.PI / 2 );
+	result.index.array.reverse();
+	return result;
+
+}
+
 function compressPoints( path ) {
 
 	for ( let i = 0, l = path.length; i < l; i ++ ) {
@@ -196,28 +223,7 @@ export class SilhouetteGenerator {
 
 		}
 
-		const vector2s = overallPath
-			.map( points =>
-				points.flatMap( v => new Vector2( v.x / intScalar, v.y / intScalar ) )
-			);
-
-		const holesShapes = vector2s
-			.filter( p => isHole( p ) )
-			.map( p => new Shape( p ) );
-
-		const solidShapes = vector2s
-			.filter( p => ! isHole( p ) )
-			.map( p => {
-
-				const shape = new Shape( p );
-				shape.holes = holesShapes;
-				return shape;
-
-			} );
-
-		const result = new ShapeGeometry( solidShapes ).rotateX( Math.PI / 2 );
-		result.index.array.reverse();
-		return result;
+		return convertPathToGeometry( overallPath, intScalar );
 
 	}
 
