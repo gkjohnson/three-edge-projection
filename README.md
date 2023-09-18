@@ -12,7 +12,7 @@ Edge projection based on [three-mesh-bvh](https://github.com/gkjohnson/three-mes
 
 # Examples
 
-[Mesh projection](https://gkjohnson.github.io/three-edge-projection/example/bundle/edgeProjection.html)
+[Geometry edge projection](https://gkjohnson.github.io/three-edge-projection/example/bundle/edgeProjection.html)
 
 [Silhouette projection](https://gkjohnson.github.io/three-edge-projection/example/bundle/silhouetteProjection.html)
 
