@@ -124,7 +124,7 @@ export class SilhouetteGenerator {
 			if ( ! doubleSided ) {
 
 				_tri.getNormal( _normal );
-				if ( _normal.dot( UP_VECTOR ) > 0 ) {
+				if ( _normal.dot( UP_VECTOR ) < 0 ) {
 
 					continue;
 
