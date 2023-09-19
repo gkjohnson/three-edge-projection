@@ -1,6 +1,6 @@
 import { Path64, Clipper, FillRule } from 'clipper2-js';
-import { ShapeGeometry, Vector3, Shape, Vector2, Triangle, ShapeUtils, Line3 } from 'three';
-import { BufferGeometry } from '../../three.js/src/core/BufferGeometry';
+import { ShapeGeometry, Vector3, Shape, Vector2, Triangle, ShapeUtils, Line3, BufferGeometry } from 'three';
+import { compressPoints } from './utils/compressPoints.js';
 
 const AREA_EPSILON = 1e-8;
 const UP_VECTOR = /* @__PURE__ */ new Vector3( 0, 1, 0 );
@@ -342,7 +342,7 @@ export class SilhouetteGenerator {
 			} else {
 
 				overallPath = Clipper.Union( overallPath, path, FillRule.NonZero );
-				compressPoints( overallPath );
+				overallPath.forEach( path => compressPoints( path ) );
 
 			}
 
