@@ -182,10 +182,13 @@ function* updateEdges( runTime = 30 ) {
 
 				outputContainer.innerText = `processing: ${ parseFloat( ( p * 100 ).toFixed( 2 ) ) }%`;
 
+				if ( params.displayProjection || params.displayWireframe ) {
 
-				projection.geometry.dispose();
-				projection.geometry = info.getGeometry();
-				projectionWireframe.geometry = projection.geometry;
+					projection.geometry.dispose();
+					projection.geometry = info.getGeometry();
+					projectionWireframe.geometry = projection.geometry;
+
+				}
 
 			},
 
