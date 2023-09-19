@@ -1,5 +1,6 @@
 import { Path64, Clipper, FillRule } from 'clipper2-js';
 import { ShapeGeometry, Vector3, Shape, Vector2, Triangle, ShapeUtils } from 'three';
+import { BufferGeometry } from '../../three.js/src/core/BufferGeometry';
 
 const AREA_EPSILON = 1e-8;
 const UP_VECTOR = /* @__PURE__ */ new Vector3( 0, 1, 0 );
@@ -35,6 +36,31 @@ function convertPathToGeometry( path, scale ) {
 
 }
 
+function convertPathToLineSegments( path, scale ) {
+
+	const arr = [];
+	path.forEach( points => {
+
+		for ( let i = 0, l = points.length; i < l; i ++ ) {
+
+			const i1 = ( i + 1 ) % points.length;
+			const p0 = points[ i ];
+			const p1 = points[ i1 ];
+			arr.push(
+				new Vector3( p0.x / scale, 0, p0.y / scale ),
+				new Vector3( p1.x / scale, 0, p1.y / scale )
+			);
+
+		}
+
+	} );
+
+	const result = new BufferGeometry();
+	result.setFromPoints( arr );
+	return result;
+
+}
+
 function compressPoints( path ) {
 
 	for ( let i = 0, l = path.length; i < l; i ++ ) {
@@ -62,6 +88,7 @@ export class SilhouetteGenerator {
 		this.iterationTime = 30;
 		this.intScalar = 1e9;
 		this.doubleSided = false;
+		this.outputLineSegments = false;
 
 	}
 
@@ -101,7 +128,7 @@ export class SilhouetteGenerator {
 
 	*generate( geometry, options = {} ) {
 
-		const { iterationTime, intScalar, doubleSided } = this;
+		const { iterationTime, intScalar, doubleSided, outputLineSegments } = this;
 		const { onProgress } = options;
 		const power = Math.log10( intScalar );
 		const extendMultiplier = Math.pow( 10, - ( power - 2 ) );
@@ -205,7 +232,9 @@ export class SilhouetteGenerator {
 
 		}
 
-		return convertPathToGeometry( overallPath, intScalar );
+		return outputLineSegments ?
+			convertPathToLineSegments( overallPath, intScalar ) :
+			convertPathToGeometry( overallPath, intScalar );
 
 	}
 
