@@ -69,13 +69,32 @@ function compressPoints( path ) {
 		for ( let k = 0; k < arr.length; k ++ ) {
 
 			const v = arr[ k ];
-			while ( arr.length > k + 1 && v.x === arr[ k + 1 ].x && v.y === arr[ k + 1 ].y ) {
+			while (
+				arr.length > k + 1 && (
+					areEqual( v, arr[ k + 1 ] ) ||
+					dist( v, arr[ k + 1 ] ) < 1e2
+				)
+			) {
 
 				arr.splice( k + 1, 1 );
 
 			}
 
 		}
+
+	}
+
+	function dist( p0, p1 ) {
+
+		const dx = p1.x - p0.x;
+		const dy = p1.y - p0.y;
+		return Math.sqrt( dx * dx + dy * dy );
+
+	}
+
+	function areEqual( p0, p1 ) {
+
+		return p0.x === p1.x && p0.y === p1.y;
 
 	}
 
