@@ -138,6 +138,19 @@ export class SilhouetteGenerator {
 		const vertCount = index ? index.count : posAttr.count;
 		let overallPath = null;
 
+
+		const handle = {
+
+			getGeometry() {
+
+				return outputLineSegments ?
+					convertPathToLineSegments( overallPath, intScalar ) :
+					convertPathToGeometry( overallPath, intScalar );
+
+			}
+
+		};
+
 		let time = performance.now();
 		for ( let i = 0; i < vertCount; i += 3 ) {
 
@@ -220,8 +233,8 @@ export class SilhouetteGenerator {
 
 				if ( onProgress ) {
 
-					const progress = i / vertCount;
-					onProgress( progress );
+					const progress = ti / vertCount;
+					onProgress( progress, handle );
 
 				}
 
