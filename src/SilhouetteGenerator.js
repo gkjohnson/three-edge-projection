@@ -9,90 +9,13 @@ const _normal = /* @__PURE__ */ new Vector3();
 const _center = /* @__PURE__ */ new Vector3();
 const _vec = /* @__PURE__ */ new Vector3();
 
-function triangleIsInside( tri, paths, scale ) {
-
-	const indices = [ 'a', 'b', 'c' ];
-	const edges = [ new Line3(), new Line3(), new Line3() ];
-	const line = new Line3();
-	const ray = new Line3();
-	ray.start.set( 0, 0, 0 )
-		.addScaledVector( tri.a, 1 / ( 3 * scale ) )
-		.addScaledVector( tri.b, 1 / ( 3 * scale ) )
-		.addScaledVector( tri.c, 1 / ( 3 * scale ) );
-	ray.end.copy( ray.start );
-	ray.end.y += 1e12;
-
-	for ( let i = 0; i < 3; i ++ ) {
-
-		const i1 = ( i + 1 ) % 3;
-		const p0 = tri[ indices[ i ] ];
-		const p1 = tri[ indices[ i1 ] ];
-
-		edges[ i ].start.copy( p0 ).multiplyScalar( 1 / scale );
-		edges[ i ].end.copy( p1 ).multiplyScalar( 1 / scale );
-
-	}
-
-	let crossCount = 0;
-	for ( let p = 0, pl = paths.length; p < pl; p ++ ) {
-
-		const points = paths[ p ];
-		for ( let i = 0, l = points.length; i < l; i ++ ) {
-
-			const i1 = ( i + 1 ) % l;
-			line.start.copy( points[ i ] ).multiplyScalar( 1 / scale );
-			line.end.copy( points[ i1 ] ).multiplyScalar( 1 / scale );
-
-			if ( lineCrossesLine( ray, line ) ) {
-
-				crossCount ++;
-
-			}
-
-			for ( let e = 0; e < 3; e ++ ) {
-
-				if ( lineCrossesLine( edges[ e ], line ) ) {
-
-					return false;
-
-				}
-
-			}
-
-		}
-
-	}
-
-	return crossCount % 2 === 1;
-
-	// TODO: this function is not working as expected. What are the conditions?
-	// https://stackoverflow.com/questions/3838329/how-can-i-check-if-two-segments-intersect
-	function lineCrossesLine( l1, l2 ) {
-
-		function ccw( A, B, C ) {
-
-			return ( C.y - A.y ) * ( B.x - A.x ) > ( B.y - A.y ) * ( C.x - A.x );
-
-		}
-
-		const A = l1.start;
-		const B = l1.end;
-
-		const C = l2.start;
-		const D = l2.end;
-
-		return ccw( A, C, D ) !== ccw( B, C, D ) && ccw( A, B, C ) !== ccw( A, B, D );
-
-	}
-
-}
-
 function convertPathToGeometry( path, scale ) {
 
-	const vector2s = path
-		.map( points =>
-			points.flatMap( v => new Vector2( v.x / scale, v.y / scale ) )
-		);
+	const vector2s = path.map( points => {
+
+		return points.flatMap( v => new Vector2( v.x / scale, v.y / scale ) );
+
+	} );
 
 	const holesShapes = vector2s
 		.filter( p => ShapeUtils.isClockWise( p ) )
@@ -108,6 +31,7 @@ function convertPathToGeometry( path, scale ) {
 
 		} );
 
+	// flip the triangles so they're facing in the right direction
 	const result = new ShapeGeometry( solidShapes ).rotateX( Math.PI / 2 );
 	result.index.array.reverse();
 	return result;
@@ -193,9 +117,49 @@ export class SilhouetteGenerator {
 
 		const index = geometry.index;
 		const posAttr = geometry.attributes.position;
-		const vertCount = index ? index.count : posAttr.count;
+		const triCount = index ? index.count / 3 : posAttr.count / 3;
 		let overallPath = null;
 
+		// const triList = new Array( triCount ).fill().map( ( v, i ) => i );
+		// triList.sort( ( a, b ) => {
+
+		// 	let ia0 = a * 3 + 0;
+		// 	let ia1 = a * 3 + 1;
+		// 	let ia2 = a * 3 + 2;
+		// 	if ( index ) {
+
+		// 		ia0 = index.getX( ia0 );
+		// 		ia1 = index.getX( ia1 );
+		// 		ia2 = index.getX( ia2 );
+
+		// 	}
+
+		// 	let ib0 = b * 3 + 0;
+		// 	let ib1 = b * 3 + 1;
+		// 	let ib2 = b * 3 + 2;
+		// 	if ( index ) {
+
+		// 		ib0 = index.getX( ib0 );
+		// 		ib1 = index.getX( ib1 );
+		// 		ib2 = index.getX( ib2 );
+
+		// 	}
+
+		// 	const aCenter = (
+		// 		posAttr.getX( ia0 ) +
+		// 		posAttr.getX( ia1 ) +
+		// 		posAttr.getX( ia2 )
+		// 	) / 3;
+
+		// 	const bCenter = (
+		// 		posAttr.getX( ib0 ) +
+		// 		posAttr.getX( ib1 ) +
+		// 		posAttr.getX( ib2 )
+		// 	) / 3;
+
+		// 	return bCenter - aCenter;
+
+		// } );
 
 		const handle = {
 
@@ -210,8 +174,10 @@ export class SilhouetteGenerator {
 		};
 
 		let time = performance.now();
-		for ( let i = 0; i < vertCount; i += 3 ) {
+		for ( let ti = 0; ti < triCount; ti ++ ) {
 
+			// const i = triList[ ti ] * 3;
+			const i = ti * 3;
 			let i0 = i + 0;
 			let i1 = i + 1;
 			let i2 = i + 2;
@@ -291,7 +257,7 @@ export class SilhouetteGenerator {
 
 				if ( onProgress ) {
 
-					const progress = i / vertCount;
+					const progress = ti / triCount;
 					onProgress( progress, handle );
 
 				}
