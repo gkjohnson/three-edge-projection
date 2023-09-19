@@ -178,9 +178,14 @@ function* updateEdges( runTime = 30 ) {
 		generator.iterationTime = runTime;
 		const task = generator.generate( mergedGeometry, {
 
-			onProgress: p => {
+			onProgress: ( p, info ) => {
 
 				outputContainer.innerText = `processing: ${ parseFloat( ( p * 100 ).toFixed( 2 ) ) }%`;
+
+
+				projection.geometry.dispose();
+				projection.geometry = info.getGeometry();
+				projectionWireframe.geometry = projection.geometry;
 
 			},
 
