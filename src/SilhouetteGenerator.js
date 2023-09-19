@@ -139,66 +139,6 @@ function convertPathToLineSegments( path, scale ) {
 
 }
 
-function compressPoints( path ) {
-
-	for ( let i = 0, l = path.length; i < l; i ++ ) {
-
-		const arr = path[ i ];
-		for ( let k = 0; k < arr.length; k ++ ) {
-
-			// remove points that are equal or very close to each other
-			const v = arr[ k ];
-			while (
-				arr.length > k + 1 &&
-				( areEqual( v, arr[ k + 1 ] ) || areClose( v, arr[ k + 1 ] ) )
-			) {
-
-				arr.splice( k + 1, 1 );
-
-			}
-
-			// join lines that are almost the same direction
-			while ( arr.length > k + 2 && sameDirection( v, arr[ k + 1 ], arr[ k + 2 ] ) ) {
-
-				arr.splice( k + 1, 1 );
-
-			}
-
-		}
-
-	}
-
-	function sameDirection( p0, p1, p2 ) {
-
-		const dx1 = p1.x - p0.x;
-		const dy1 = p1.y - p0.y;
-
-		const dx2 = p2.x - p1.x;
-		const dy2 = p2.y - p1.y;
-
-		const s1 = dx1 / dy1;
-		const s2 = dx2 / dy2;
-
-		return Math.abs( s1 - s2 ) < 1e-3;
-
-	}
-
-	function areClose( p0, p1 ) {
-
-		const dx = p1.x - p0.x;
-		const dy = p1.y - p0.y;
-		return Math.sqrt( dx * dx + dy * dy ) < 1e2;
-
-	}
-
-	function areEqual( p0, p1 ) {
-
-		return p0.x === p1.x && p0.y === p1.y;
-
-	}
-
-}
-
 export class SilhouetteGenerator {
 
 	constructor() {
