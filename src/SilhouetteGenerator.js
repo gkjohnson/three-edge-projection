@@ -1,6 +1,7 @@
 import { Path64, Clipper, FillRule } from 'clipper2-js';
 import { ShapeGeometry, Vector3, Shape, Vector2, Triangle, ShapeUtils, Line3, BufferGeometry } from 'three';
 import { compressPoints } from './utils/compressPoints.js';
+import { triangleIsInsidePaths } from './utils/triangleIsInsidePaths.js';
 
 const AREA_EPSILON = 1e-8;
 const UP_VECTOR = /* @__PURE__ */ new Vector3( 0, 1, 0 );
@@ -146,15 +147,15 @@ export class SilhouetteGenerator {
 		// 	}
 
 		// 	const aCenter = (
-		// 		posAttr.getX( ia0 ) +
-		// 		posAttr.getX( ia1 ) +
-		// 		posAttr.getX( ia2 )
+		// 		posAttr.getY( ia0 ) +
+		// 		posAttr.getY( ia1 ) +
+		// 		posAttr.getY( ia2 )
 		// 	) / 3;
 
 		// 	const bCenter = (
-		// 		posAttr.getX( ib0 ) +
-		// 		posAttr.getX( ib1 ) +
-		// 		posAttr.getX( ib2 )
+		// 		posAttr.getY( ib0 ) +
+		// 		posAttr.getY( ib1 ) +
+		// 		posAttr.getY( ib2 )
 		// 	) / 3;
 
 		// 	return bCenter - aCenter;
@@ -239,6 +240,15 @@ export class SilhouetteGenerator {
 				b.x * intScalar, b.z * intScalar,
 				c.x * intScalar, c.z * intScalar,
 			] ) );
+
+			a.multiplyScalar( intScalar );
+			b.multiplyScalar( intScalar );
+			c.multiplyScalar( intScalar );
+			if ( overallPath && triangleIsInsidePaths( _tri, overallPath ) ) {
+
+				continue;
+
+			}
 
 			// perform union
 			if ( overallPath === null ) {
