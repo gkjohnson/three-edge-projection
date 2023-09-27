@@ -20,8 +20,9 @@ import { SilhouetteGeneratorWorker } from '../src/worker/SilhouetteGeneratorWork
 
 const params = {
 	displayModel: 'color',
-	displayProjection: true,
+	displaySilhouette: true,
 	displayWireframe: false,
+	displayOutline: false,
 	useWorker: false,
 	rotate: () => {
 
@@ -43,7 +44,7 @@ const params = {
 };
 
 let renderer, camera, scene, gui, controls;
-let model, projection, projectionWireframe, group;
+let model, projection, projectionWireframe, group, edges;
 let outputContainer;
 let worker;
 let task = null;
@@ -98,6 +99,10 @@ async function init() {
 	projection.position.y = - 2;
 	scene.add( projection );
 
+	edges = new LineSegments( undefined, new LineBasicMaterial( { color: 0 } ) );
+	edges.position.y = - 2;
+	scene.add( edges );
+
 	projectionWireframe = new Mesh( undefined, new MeshBasicMaterial( { color: 0xc2185b, wireframe: true } ) );
 	projectionWireframe.position.y = - 2;
 	scene.add( projectionWireframe );
@@ -111,7 +116,8 @@ async function init() {
 	controls = new OrbitControls( camera, renderer.domElement );
 
 	gui = new GUI();
-	gui.add( params, 'displayProjection' );
+	gui.add( params, 'displaySilhouette' );
+	gui.add( params, 'displayOutline' );
 	gui.add( params, 'displayWireframe' );
 	gui.add( params, 'useWorker' );
 	gui.add( params, 'rotate' );
@@ -171,22 +177,34 @@ function* updateEdges( runTime = 30 ) {
 	// generate the candidate edges
 	timeStart = window.performance.now();
 
-	let geometry = null;
+	let result = null;
 	if ( ! params.useWorker ) {
 
 		const generator = new SilhouetteGenerator();
 		generator.iterationTime = runTime;
+		generator.output = 2;
 		const task = generator.generate( mergedGeometry, {
 
 			onProgress: ( p, info ) => {
 
 				outputContainer.innerText = `processing: ${ parseFloat( ( p * 100 ).toFixed( 2 ) ) }%`;
 
-				if ( params.displayProjection || params.displayWireframe ) {
+				const result = info.getGeometry();
+				projection.geometry.dispose();
+				projection.geometry = result[ 0 ];
+				projectionWireframe.geometry = result[ 0 ];
+
+				edges.geometry.dispose();
+				edges.geometry = result[ 1 ];
+
+				if ( params.displaySilhouette || params.displayWireframe || params.displayOutline ) {
 
 					projection.geometry.dispose();
-					projection.geometry = info.getGeometry();
-					projectionWireframe.geometry = projection.geometry;
+					projection.geometry = result[ 0 ];
+					projectionWireframe.geometry = result[ 0 ];
+
+					edges.geometry.dispose();
+					edges.geometry = result[ 1 ];
 
 				}
 
@@ -202,7 +220,7 @@ function* updateEdges( runTime = 30 ) {
 
 		}
 
-		geometry = result.value;
+		result = result.value;
 
 	} else {
 
@@ -216,11 +234,11 @@ function* updateEdges( runTime = 30 ) {
 			} )
 			.then( result => {
 
-				geometry = result;
+				result = result;
 
 			} );
 
-		while ( geometry === null ) {
+		while ( result === null ) {
 
 			yield;
 
@@ -231,12 +249,16 @@ function* updateEdges( runTime = 30 ) {
 	const trimTime = window.performance.now() - timeStart;
 
 	projection.geometry.dispose();
-	projection.geometry = geometry;
-	projectionWireframe.geometry = geometry;
+	projection.geometry = result[ 0 ];
+	projectionWireframe.geometry = result[ 0 ];
+
+	edges.geometry.dispose();
+	edges.geometry = result[ 1 ];
+
 	outputContainer.innerText =
 		`merge geometry  : ${ mergeTime.toFixed( 2 ) }ms\n` +
 		`edge trimming   : ${ trimTime.toFixed( 2 ) }ms\n` +
-		`triangles       : ${ geometry.index.count / 3 } tris`;
+		`triangles       : ${ result.index.count / 3 } tris`;
 
 }
 
@@ -256,8 +278,9 @@ function render() {
 
 	}
 
-	projection.visible = params.displayProjection;
+	projection.visible = params.displaySilhouette;
 	projectionWireframe.visible = params.displayWireframe;
+	edges.visible = params.displayOutline;
 	renderer.render( scene, camera );
 
 }
