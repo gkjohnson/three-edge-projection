@@ -2,6 +2,7 @@ import { Path64, Clipper, FillRule } from 'clipper2-js';
 import { ShapeGeometry, Vector3, Shape, Vector2, Triangle, ShapeUtils, Line3, BufferGeometry } from 'three';
 import { compressPoints } from './utils/compressPoints.js';
 import { triangleIsInsidePaths } from './utils/triangleIsInsidePaths.js';
+import { getSizeSortedTriList } from './utils/getSizeSortedTriList.js';
 
 const AREA_EPSILON = 1e-8;
 const UP_VECTOR = /* @__PURE__ */ new Vector3( 0, 1, 0 );
@@ -64,6 +65,9 @@ function convertPathToLineSegments( path, scale ) {
 
 }
 
+export const OUTPUT_MESH = 0;
+export const OUTPUT_LINE_SEGMENTS = 1;
+export const OUTPUT_BOTH = 2;
 export class SilhouetteGenerator {
 
 	constructor() {
@@ -71,7 +75,7 @@ export class SilhouetteGenerator {
 		this.iterationTime = 30;
 		this.intScalar = 1e9;
 		this.doubleSided = false;
-		this.outputLineSegments = false;
+		this.output = OUTPUT_MESH;
 
 	}
 
@@ -111,7 +115,7 @@ export class SilhouetteGenerator {
 
 	*generate( geometry, options = {} ) {
 
-		const { iterationTime, intScalar, doubleSided, outputLineSegments } = this;
+		const { iterationTime, intScalar, doubleSided, output } = this;
 		const { onProgress } = options;
 		const power = Math.log10( intScalar );
 		const extendMultiplier = Math.pow( 10, - ( power - 2 ) );
@@ -121,54 +125,27 @@ export class SilhouetteGenerator {
 		const triCount = index ? index.count / 3 : posAttr.count / 3;
 		let overallPath = null;
 
-		// const triList = new Array( triCount ).fill().map( ( v, i ) => i );
-		// triList.sort( ( a, b ) => {
-
-		// 	let ia0 = a * 3 + 0;
-		// 	let ia1 = a * 3 + 1;
-		// 	let ia2 = a * 3 + 2;
-		// 	if ( index ) {
-
-		// 		ia0 = index.getX( ia0 );
-		// 		ia1 = index.getX( ia1 );
-		// 		ia2 = index.getX( ia2 );
-
-		// 	}
-
-		// 	let ib0 = b * 3 + 0;
-		// 	let ib1 = b * 3 + 1;
-		// 	let ib2 = b * 3 + 2;
-		// 	if ( index ) {
-
-		// 		ib0 = index.getX( ib0 );
-		// 		ib1 = index.getX( ib1 );
-		// 		ib2 = index.getX( ib2 );
-
-		// 	}
-
-		// 	const aCenter = (
-		// 		posAttr.getY( ia0 ) +
-		// 		posAttr.getY( ia1 ) +
-		// 		posAttr.getY( ia2 )
-		// 	) / 3;
-
-		// 	const bCenter = (
-		// 		posAttr.getY( ib0 ) +
-		// 		posAttr.getY( ib1 ) +
-		// 		posAttr.getY( ib2 )
-		// 	) / 3;
-
-		// 	return bCenter - aCenter;
-
-		// } );
-
+		const triList = getSizeSortedTriList( geometry );
 		const handle = {
 
 			getGeometry() {
 
-				return outputLineSegments ?
-					convertPathToLineSegments( overallPath, intScalar ) :
-					convertPathToGeometry( overallPath, intScalar );
+				if ( output === OUTPUT_MESH ) {
+
+					return convertPathToGeometry( overallPath, intScalar );
+
+				} else if ( output === OUTPUT_LINE_SEGMENTS ) {
+
+					return convertPathToLineSegments( overallPath, intScalar );
+
+				} else {
+
+					return [
+						convertPathToGeometry( overallPath, intScalar ),
+						convertPathToLineSegments( overallPath, intScalar ),
+					];
+
+				}
 
 			}
 
@@ -177,8 +154,7 @@ export class SilhouetteGenerator {
 		let time = performance.now();
 		for ( let ti = 0; ti < triCount; ti ++ ) {
 
-			// const i = triList[ ti ] * 3;
-			const i = ti * 3;
+			const i = triList[ ti ] * 3;
 			let i0 = i + 0;
 			let i1 = i + 1;
 			let i2 = i + 2;
@@ -279,9 +255,7 @@ export class SilhouetteGenerator {
 
 		}
 
-		return outputLineSegments ?
-			convertPathToLineSegments( overallPath, intScalar ) :
-			convertPathToGeometry( overallPath, intScalar );
+		return handle.getGeometry();
 
 	}
 
