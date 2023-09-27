@@ -11,6 +11,8 @@ import {
 	Mesh,
 	TorusKnotGeometry,
 	DoubleSide,
+	LineSegments,
+	LineBasicMaterial,
 } from 'three';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
@@ -19,10 +21,10 @@ import { SilhouetteGenerator } from '../src';
 import { SilhouetteGeneratorWorker } from '../src/worker/SilhouetteGeneratorWorker.js';
 
 const params = {
-	displayModel: 'color',
 	displaySilhouette: true,
 	displayWireframe: false,
 	displayOutline: false,
+	displayModel: true,
 	useWorker: false,
 	rotate: () => {
 
@@ -116,6 +118,7 @@ async function init() {
 	controls = new OrbitControls( camera, renderer.domElement );
 
 	gui = new GUI();
+	gui.add( params, 'displayModel' );
 	gui.add( params, 'displaySilhouette' );
 	gui.add( params, 'displayOutline' );
 	gui.add( params, 'displayWireframe' );
@@ -212,15 +215,15 @@ function* updateEdges( runTime = 30 ) {
 
 		} );
 
-		let result = task.next();
-		while ( ! result.done ) {
+		let res = task.next();
+		while ( ! res.done ) {
 
-			result = task.next();
+			res = task.next();
 			yield;
 
 		}
 
-		result = result.value;
+		result = res.value;
 
 	} else {
 
@@ -232,9 +235,9 @@ function* updateEdges( runTime = 30 ) {
 
 				},
 			} )
-			.then( result => {
+			.then( res => {
 
-				result = result;
+				result = res;
 
 			} );
 
@@ -247,7 +250,6 @@ function* updateEdges( runTime = 30 ) {
 	}
 
 	const trimTime = window.performance.now() - timeStart;
-
 	projection.geometry.dispose();
 	projection.geometry = result[ 0 ];
 	projectionWireframe.geometry = result[ 0 ];
@@ -258,10 +260,9 @@ function* updateEdges( runTime = 30 ) {
 	outputContainer.innerText =
 		`merge geometry  : ${ mergeTime.toFixed( 2 ) }ms\n` +
 		`edge trimming   : ${ trimTime.toFixed( 2 ) }ms\n` +
-		`triangles       : ${ result.index.count / 3 } tris`;
+		`triangles       : ${ projection.geometry.index.count / 3 } tris`;
 
 }
-
 
 function render() {
 
@@ -278,6 +279,7 @@ function render() {
 
 	}
 
+	model.visible = params.displayModel;
 	projection.visible = params.displaySilhouette;
 	projectionWireframe.visible = params.displayWireframe;
 	edges.visible = params.displayOutline;
