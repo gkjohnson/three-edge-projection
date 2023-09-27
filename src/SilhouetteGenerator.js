@@ -1,8 +1,9 @@
 import { Path64, Clipper, FillRule } from 'clipper2-js';
-import { ShapeGeometry, Vector3, Shape, Vector2, Triangle, ShapeUtils, Line3, BufferGeometry } from 'three';
+import { ShapeGeometry, Vector3, Shape, Vector2, Triangle, ShapeUtils, BufferGeometry } from 'three';
 import { compressPoints } from './utils/compressPoints.js';
 import { triangleIsInsidePaths } from './utils/triangleIsInsidePaths.js';
 import { getSizeSortedTriList } from './utils/getSizeSortedTriList.js';
+import { getTriCount } from './utils/geometryUtils.js';
 
 const AREA_EPSILON = 1e-8;
 const UP_VECTOR = /* @__PURE__ */ new Vector3( 0, 1, 0 );
@@ -122,7 +123,7 @@ export class SilhouetteGenerator {
 
 		const index = geometry.index;
 		const posAttr = geometry.attributes.position;
-		const triCount = index ? index.count / 3 : posAttr.count / 3;
+		const triCount = getTriCount( geometry );
 		let overallPath = null;
 
 		const triList = getSizeSortedTriList( geometry );

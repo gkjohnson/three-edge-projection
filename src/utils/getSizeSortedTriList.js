@@ -1,11 +1,12 @@
 import { Triangle } from 'three';
+import { getTriCount } from './geometryUtils.js';
 
 const _tri = new Triangle();
 export function getSizeSortedTriList( geometry ) {
 
 	const index = geometry.index;
 	const posAttr = geometry.attributes.position;
-	const triCount = index ? index.count / 3 : posAttr.count / 3;
+	const triCount = getTriCount( geometry );
 
 	return new Array( triCount )
 		.fill()
