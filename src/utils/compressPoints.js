@@ -36,19 +36,45 @@ export function compressPoints( points ) {
 
 		// remove points that are equal or very close to each other
 		const v = points[ k ];
-		while (
-			points.length > k + 1 &&
-			( areEqual( v, points[ k + 1 ] ) || areClose( v, points[ k + 1 ] ) )
-		) {
+		while ( true ) {
 
-			points.splice( k + 1, 1 );
+			const k1 = k + 1;
+			if (
+				points.length > k1 &&
+				(
+					areEqual( v, points[ k1 ] ) ||
+					areClose( v, points[ k1 ] )
+				)
+			) {
+
+				points.splice( k1, 1 );
+
+			} else {
+
+				break;
+
+			}
+
 
 		}
 
 		// join lines that are almost the same direction
-		while ( points.length > k + 2 && sameDirection( v, points[ k + 1 ], points[ k + 2 ] ) ) {
+		while ( true ) {
 
-			points.splice( k + 1, 1 );
+			const k1 = k + 1;
+			const k2 = k + 2;
+			if (
+				points.length > k2 &&
+				sameDirection( v, points[ k1 ], points[ k2 ] )
+			) {
+
+				points.splice( k + 1, 1 );
+
+			} else {
+
+				break;
+
+			}
 
 		}
 
