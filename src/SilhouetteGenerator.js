@@ -76,6 +76,7 @@ export class SilhouetteGenerator {
 		this.iterationTime = 30;
 		this.intScalar = 1e9;
 		this.doubleSided = false;
+		this.sortTriangles = false;
 		this.output = OUTPUT_MESH;
 
 	}
@@ -116,7 +117,7 @@ export class SilhouetteGenerator {
 
 	*generate( geometry, options = {} ) {
 
-		const { iterationTime, intScalar, doubleSided, output } = this;
+		const { iterationTime, intScalar, doubleSided, output, sortTriangles } = this;
 		const { onProgress } = options;
 		const power = Math.log10( intScalar );
 		const extendMultiplier = Math.pow( 10, - ( power - 2 ) );
@@ -126,7 +127,10 @@ export class SilhouetteGenerator {
 		const triCount = getTriCount( geometry );
 		let overallPath = null;
 
-		const triList = getSizeSortedTriList( geometry );
+		const triList = sortTriangles ?
+			getSizeSortedTriList( geometry ) :
+			new Array( triCount ).fill().map( ( v, i ) => i );
+
 		const handle = {
 
 			getGeometry() {

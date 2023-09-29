@@ -41,7 +41,7 @@ export function getSizeSortedTriList( geometry ) {
 		.sort( ( a, b ) => {
 
 			// sort the triangles largest to smallest
-			return b - a;
+			return b.area - a.area;
 
 		} )
 		.map( o => {
