@@ -80,7 +80,7 @@ The threshold angle in degrees at which edges are generated.
 ### .includeIntersectionEdges
 
 ```js
-includeIntersectionEdges = false : Boolean
+includeIntersectionEdges = true : Boolean
 ```
 
 Whether to generate edges representing the intersections between triangles.
