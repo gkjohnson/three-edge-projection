@@ -132,6 +132,22 @@ doubleSided = false : Boolean
 
 If `false` then only the triangles facing upwards are included in the silhouette.
 
+### .sortTriangles
+
+```js
+sortTriangles = false : Boolean
+```
+
+Whether to sort triangles and project them large-to-small. In some cases this can cause the performance to drop since the union operation is best performed with smooth, simple edge shapes.
+
+### .output
+
+```js
+output = OUTPUT_MESH | OUTPUT_LINE_SEGMENTS | OUTPUT_BOTH
+```
+
+Whether to output mesh geometry, line segments geometry, or both in an array ( `[ mesh, line segments ]` );
+
 ### .generate
 
 ```js

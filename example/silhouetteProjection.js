@@ -17,7 +17,7 @@ import {
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { SilhouetteGenerator } from '../src';
+import { OUTPUT_BOTH, SilhouetteGenerator } from '../src';
 import { SilhouetteGeneratorWorker } from '../src/worker/SilhouetteGeneratorWorker.js';
 
 const params = {
@@ -185,7 +185,7 @@ function* updateEdges( runTime = 30 ) {
 
 		const generator = new SilhouetteGenerator();
 		generator.iterationTime = runTime;
-		generator.output = 2;
+		generator.output = OUTPUT_BOTH;
 		const task = generator.generate( mergedGeometry, {
 
 			onProgress: ( p, info ) => {
@@ -229,6 +229,7 @@ function* updateEdges( runTime = 30 ) {
 
 		worker
 			.generate( mergedGeometry, {
+				output: OUTPUT_BOTH,
 				onProgress: p => {
 
 					outputContainer.innerText = `processing: ${ parseFloat( ( p * 100 ).toFixed( 2 ) ) }%`;

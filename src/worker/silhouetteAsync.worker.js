@@ -1,5 +1,5 @@
 import { BufferAttribute, BufferGeometry } from 'three';
-import { SilhouetteGenerator } from '../SilhouetteGenerator.js';
+import { OUTPUT_BOTH, SilhouetteGenerator } from '../SilhouetteGenerator.js';
 
 onmessage = function ( { data } ) {
 
@@ -30,6 +30,9 @@ onmessage = function ( { data } ) {
 
 		const generator = new SilhouetteGenerator();
 		generator.doubleSided = options.doubleSided ?? generator.doubleSided;
+		generator.output = options.output ?? generator.output;
+		generator.intScalar = options.intScalar ?? generator.intScalar;
+		generator.sortTriangles = options.sortTriangles ?? generator.sortTriangles;
 		const task = generator.generate( geometry, {
 			onProgress: onProgressCallback,
 		} );
@@ -41,18 +44,46 @@ onmessage = function ( { data } ) {
 
 		}
 
-		const posArr = result.value.attributes.position.array;
-		const indexArr = result.value.index.array;
-		postMessage( {
+		let buffers, output;
+		if ( generator.output === OUTPUT_BOTH ) {
 
-			result: {
+			buffers = [];
+			output = [];
+			result.value.forEach( g => {
+
+				console.log( g );
+				const posArr = g.attributes.position.array;
+				const indexArr = g.index?.array || null;
+				output.push( {
+					position: posArr,
+					index: indexArr,
+				} );
+				buffers.push(
+					posArr.buffer,
+					indexArr?.buffer,
+				);
+
+			} );
+
+		} else {
+
+			const posArr = result.value.attributes.position.array;
+			const indexArr = result.value.index.array;
+			output = {
 				position: posArr,
 				index: indexArr,
-			},
+			};
+			buffers = [ posArr.buffer, indexArr.buffer ];
+
+		}
+
+		postMessage( {
+
+			result: output,
 			error: null,
 			progress: 1,
 
-		}, [ posArr.buffer, indexArr.buffer ] );
+		}, buffers.filter( b => ! ! b ) );
 
 	} catch ( error ) {
 

@@ -1,4 +1,5 @@
 import { BufferAttribute, BufferGeometry } from 'three';
+import { OUTPUT_BOTH } from '../SilhouetteGenerator';
 
 const NAME = 'SilhouetteGeneratorWorker';
 export class SilhouetteGeneratorWorker {
@@ -61,10 +62,33 @@ export class SilhouetteGeneratorWorker {
 
 				} else if ( data.result ) {
 
-					const geometry = new BufferGeometry();
-					geometry.setAttribute( 'position', new BufferAttribute( data.result.position, 3, false ) );
-					geometry.setIndex( new BufferAttribute( data.result.index, 1, false ) );
-					resolve( geometry );
+					if ( options.output === OUTPUT_BOTH ) {
+
+						const result = data.result.map( info => {
+
+							const geometry = new BufferGeometry();
+							geometry.setAttribute( 'position', new BufferAttribute( info.position, 3, false ) );
+							if ( info.index ) {
+
+								geometry.setIndex( new BufferAttribute( info.index, 1, false ) );
+
+							}
+
+							return geometry;
+
+						} );
+
+						resolve( result );
+
+					} else {
+
+						const geometry = new BufferGeometry();
+						geometry.setAttribute( 'position', new BufferAttribute( data.result.position, 3, false ) );
+						geometry.setIndex( new BufferAttribute( data.result.index, 1, false ) );
+						resolve( geometry );
+
+					}
+
 					worker.onmessage = null;
 
 				} else if ( options.onProgress ) {
