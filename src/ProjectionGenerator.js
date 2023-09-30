@@ -68,7 +68,7 @@ export class ProjectionGenerator {
 		this.sortEdges = true;
 		this.iterationTime = 30;
 		this.angleThreshold = 50;
-		this.includeIntersectionEdges = false;
+		this.includeIntersectionEdges = true;
 
 	}
 
@@ -121,7 +121,8 @@ export class ProjectionGenerator {
 		let edges = generateEdges( geometry, UP_VECTOR, angleThreshold );
 		if ( includeIntersectionEdges ) {
 
-			edges = edges.concat( generateIntersectionEdges( bvh ) );
+			const results = yield* generateIntersectionEdges( bvh, iterationTime );
+			edges = edges.concat( results );
 
 		}
 
