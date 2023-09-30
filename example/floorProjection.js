@@ -18,12 +18,22 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { ProjectionGenerator, SilhouetteGenerator } from '../src';
+import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 
 const ANGLE_THRESHOLD = 50;
 let renderer, camera, scene, gui, controls;
 let model, outlines, group, silhouette;
 let outputContainer;
 let task = null;
+
+const params = {
+	displayModel: false,
+	regenerate: () => {
+
+		task = updateProjection();
+
+	},
+};
 
 init();
 
@@ -91,6 +101,10 @@ async function init() {
 	controls.maxPolarAngle = Math.PI / 3;
 
 	task = updateProjection();
+
+	gui = new GUI();
+	gui.add( params, 'displayModel' );
+	gui.add( params, 'regenerate' );
 
 	render();
 
@@ -216,6 +230,7 @@ function render() {
 
 	}
 
+	model.visible = params.displayModel;
 	renderer.render( scene, camera );
 
 }
