@@ -26,7 +26,7 @@ const params = {
 	displayEdges: false,
 	displayProjection: true,
 	sortEdges: true,
-	includeIntersectionEdges: false,
+	includeIntersectionEdges: true,
 	useWorker: false,
 	rotate: () => {
 
@@ -229,6 +229,14 @@ function* updateEdges( runTime = 30 ) {
 	const mergeTime = window.performance.now() - timeStart;
 
 	yield;
+
+	if ( params.includeIntersectionEdges ) {
+
+		outputContainer.innerText = 'processing: finding edge intersections...';
+		projection.geometry.dispose();
+		projection.geometry = new BufferGeometry();
+
+	}
 
 	// generate the candidate edges
 	timeStart = window.performance.now();
