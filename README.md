@@ -16,6 +16,8 @@ Edge projection based on [three-mesh-bvh](https://github.com/gkjohnson/three-mes
 
 [Silhouette projection](https://gkjohnson.github.io/three-edge-projection/example/bundle/silhouetteProjection.html)
 
+[Floor plan projection](https://gkjohnson.github.io/three-edge-projection/example/bundle/floorProjection.html)
+
 # Use
 
 **Generator**
