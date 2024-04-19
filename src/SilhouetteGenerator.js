@@ -94,6 +94,7 @@ export class SilhouetteGenerator {
 				if ( signal && signal.aborted ) {
 
 					reject( new Error( 'SilhouetteGenerator: Process aborted via AbortSignal.' ) );
+					return;
 
 				}
 

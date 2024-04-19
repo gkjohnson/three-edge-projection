@@ -85,6 +85,7 @@ export class ProjectionGenerator {
 				if ( signal && signal.aborted ) {
 
 					reject( new Error( 'ProjectionGenerator: Process aborted via AbortSignal.' ) );
+					return;
 
 				}
 
