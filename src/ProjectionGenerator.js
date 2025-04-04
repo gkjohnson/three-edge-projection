@@ -118,6 +118,7 @@ export class ProjectionGenerator {
 
 		}
 
+		// find the set of edges of intersecting triangles
 		const geometry = bvh.geometry;
 		let edges = generateEdges( geometry, UP_VECTOR, angleThreshold );
 		if ( includeIntersectionEdges ) {
@@ -127,6 +128,7 @@ export class ProjectionGenerator {
 
 		}
 
+		// sort the edges from lowest to highest
 		if ( sortEdges ) {
 
 			edges.sort( ( a, b ) => {
@@ -222,6 +224,7 @@ export class ProjectionGenerator {
 
 					}
 
+					// Cull overly small edges
 					if ( _beneathLine.distance() < DIST_THRESHOLD ) {
 
 						return false;
