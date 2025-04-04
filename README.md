@@ -18,6 +18,8 @@ Edge projection based on [three-mesh-bvh](https://github.com/gkjohnson/three-mes
 
 [Floor plan projection](https://gkjohnson.github.io/three-edge-projection/example/bundle/floorProjection.html)
 
+[Planar intersection](https://gkjohnson.github.io/three-edge-projection/example/bundle/planarIntersection.html)
+
 # Use
 
 **Generator**
@@ -177,3 +179,20 @@ generateAsync(
 
 Generate the silhouette geometry with a promise-style API.
 
+## PlanarIntersectionGenerator
+
+### .plane
+
+```js
+plane : Plane
+```
+
+Plane that defaults to y up plane at the origin.
+
+### .generate
+
+```js
+generate( geometry : MeshBVH | BufferGeometry ) : BufferGeometry
+```
+
+Generates a geometry of the resulting line segments from the planar intersection.
