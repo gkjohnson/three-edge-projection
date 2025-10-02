@@ -52,7 +52,7 @@
     "eslint-plugin-jest": "^23.20.0",
     "jest": "^27.2.4",
     "parcel": "^2.9.3",
-    "three": "^0.155.0",
-    "three-mesh-bvh": "^0.6.6"
+    "three": "^0.178.0",
+    "three-mesh-bvh": "^0.9.1"
   }
 }
