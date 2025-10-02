@@ -4,8 +4,8 @@
   "description": "",
   "main": "src/index.js",
   "scripts": {
-    "start": "parcel serve ./example/*.html --dist-dir ./example/dev-bundle/ --no-hmr",
-    "build-examples": "cd example && parcel build ./*.html --dist-dir ./bundle/ --public-url . --no-cache --no-content-hash",
+    "start": "vite --config ./vite.config.js",
+    "build-examples": "vite build --config ./vite.config.js",
     "lint": "eslint \"./src/**/*.js\" \"./example/*.js\"",
     "test": "cd test && jest"
   },
@@ -51,8 +51,8 @@
     "eslint-config-mdcs": "^5.0.0",
     "eslint-plugin-jest": "^23.20.0",
     "jest": "^27.2.4",
-    "parcel": "^2.9.3",
     "three": "^0.178.0",
-    "three-mesh-bvh": "^0.9.1"
+    "three-mesh-bvh": "^0.9.1",
+    "vite": "^6.2.2"
   }
 }
