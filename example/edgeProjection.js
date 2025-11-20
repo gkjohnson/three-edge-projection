@@ -195,7 +195,7 @@ function* updateEdges( runTime = 30 ) {
 				if ( params.displayProjection ) {
 
 					projection.geometry.dispose();
-					projection.geometry = data.getLineGeometry();
+					projection.geometry = data.getVisibleLineGeometry();
 
 				}
 

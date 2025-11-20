@@ -30,43 +30,26 @@ const _overlapLine = /* @__PURE__ */ new Line3();
 const _localLine = /* @__PURE__ */ new Line3();
 const _invMat = /* @__PURE__ */ new Matrix4();
 
-class EdgeSet {
+function toLineGeometry( edges ) {
 
-	constructor() {
+	const edgeArray = new Float32Array( edges.length * 6 );
+	let c = 0;
+	for ( let i = 0, l = edges.length; i < l; i ++ ) {
 
-		this.edges = [];
-
-	}
-
-	getLineGeometry( y = 0 ) {
-
-		const edges = this.edges;
-		const edgeArray = new Float32Array( edges.length * 6 );
-		let c = 0;
-		for ( let i = 0, l = edges.length; i < l; i ++ ) {
-
-			const line = edges[ i ];
-			edgeArray[ c ++ ] = line[ 0 ];
-			edgeArray[ c ++ ] = y;
-			edgeArray[ c ++ ] = line[ 2 ];
-			edgeArray[ c ++ ] = line[ 3 ];
-			edgeArray[ c ++ ] = y;
-			edgeArray[ c ++ ] = line[ 5 ];
-
-		}
-
-		const edgeGeom = new BufferGeometry();
-		const edgeBuffer = new BufferAttribute( edgeArray, 3, true );
-		edgeGeom.setAttribute( 'position', edgeBuffer );
-		return edgeGeom;
+		const line = edges[ i ];
+		edgeArray[ c ++ ] = line[ 0 ];
+		edgeArray[ c ++ ] = 0;
+		edgeArray[ c ++ ] = line[ 2 ];
+		edgeArray[ c ++ ] = line[ 3 ];
+		edgeArray[ c ++ ] = 0;
+		edgeArray[ c ++ ] = line[ 5 ];
 
 	}
 
-	reset() {
-
-		this.edges = [];
-
-	}
+	const edgeGeom = new BufferGeometry();
+	const edgeBuffer = new BufferAttribute( edgeArray, 3, true );
+	edgeGeom.setAttribute( 'position', edgeBuffer );
+	return edgeGeom;
 
 }
 
@@ -87,28 +70,28 @@ class ProjectedEdgeCollector {
 
 		this.meshes = meshes;
 		this.bvhs = new Map();
-		this.edgeSet = new EdgeSet();
-		this.hiddenEdgeSet = new EdgeSet();
+		this.visibleEdges = [];
+		this.hiddenEdges = [];
 		this.iterationTime = 30;
 
 	}
 
 	reset() {
 
-		this.edgeSet.reset();
-		this.hiddenEdgeSet.reset();
+		this.visibleEdges.length = 0;
+		this.hiddenEdges.length = 0;
 
 	}
 
 	getVisibleLineGeometry() {
 
-		return this.edgeSet.getLineGeometry();
+		return toLineGeometry( this.visibleEdges );
 
 	}
 
 	getHiddenLineGeometry() {
 
-		return this.hiddenEdgeSet.getLineGeometry();
+		return toLineGeometry( this.hiddenEdges );
 
 
 	}
@@ -128,7 +111,7 @@ class ProjectedEdgeCollector {
 	*addEdgesGenerator( edges, options = {} ) {
 
 		const { onProgress = null } = options;
-		const { meshes, bvhs, edgeSet, hiddenEdgeSet, iterationTime } = this;
+		const { meshes, bvhs, visibleEdges, hiddenEdges, iterationTime } = this;
 		let time = performance.now();
 		for ( let i = 0; i < meshes.length; i ++ ) {
 
@@ -170,7 +153,7 @@ class ProjectedEdgeCollector {
 					if ( onProgress ) {
 
 						const progress = i / edges.length;
-						onProgress( progress, edgeSet );
+						onProgress( progress, this );
 
 					}
 
@@ -297,13 +280,12 @@ class ProjectedEdgeCollector {
 			}
 
 			// convert the overlap points to proper lines
-			overlapsToLines( line, hiddenOverlaps, false, edgeSet.edges );
-			overlapsToLines( line, hiddenOverlaps, true, hiddenEdgeSet.edges );
+			overlapsToLines( line, hiddenOverlaps, false, visibleEdges );
+			overlapsToLines( line, hiddenOverlaps, true, hiddenEdges );
 
 		}
 
 	}
-
 
 }
 
