@@ -5,9 +5,12 @@ import { isLineTriangleEdge } from './triangleLineUtils.js';
 const OFFSET_EPSILON = 1e-6;
 const _tri = new ExtendedTriangle();
 const _line = new Line3();
-export function* generateIntersectionEdges( bvh, iterationTime = 30 ) {
+export function* generateIntersectionEdges( bvh, target = [], options = {} ) {
 
-	const edges = [];
+	const {
+		iterationTime = 30,
+	} = options;
+
 	const geometry = bvh.geometry;
 	const index = geometry.index;
 	const posAttr = geometry.attributes.position;
@@ -15,6 +18,14 @@ export function* generateIntersectionEdges( bvh, iterationTime = 30 ) {
 
 	let time = performance.now();
 	for ( let i = 0; i < vertCount; i += 3 ) {
+
+		const delta = performance.now() - time;
+		if ( delta > iterationTime ) {
+
+			yield;
+			time = performance.now();
+
+		}
 
 		let i0 = i + 0;
 		let i1 = i + 1;
@@ -70,7 +81,7 @@ export function* generateIntersectionEdges( bvh, iterationTime = 30 ) {
 
 					_line.start.y += OFFSET_EPSILON;
 					_line.end.y += OFFSET_EPSILON;
-					edges.push( _line.clone() );
+					target.push( _line.clone() );
 
 				}
 
@@ -78,16 +89,8 @@ export function* generateIntersectionEdges( bvh, iterationTime = 30 ) {
 
 		} );
 
-		const delta = performance.now() - time;
-		if ( delta > iterationTime ) {
-
-			yield;
-			time = performance.now();
-
-		}
-
 	}
 
-	return edges;
+	return target;
 
 }
