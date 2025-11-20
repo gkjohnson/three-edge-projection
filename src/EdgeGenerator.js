@@ -130,8 +130,12 @@ export class EdgeGenerator {
 
 				const mesh = meshes[ i ];
 				const geometry = mesh.geometry;
-				const bvh = geometry.boundsTree || new MeshBVH( geometry, { maxLeafTris: 1 } );
-				bvhs.set( geometry, bvh );
+				if ( ! bvhs.has( geometry ) ) {
+
+					const bvh = geometry.boundsTree || new MeshBVH( geometry, { maxLeafTris: 1 } );
+					bvhs.set( geometry, bvh );
+
+				}
 
 			}
 
