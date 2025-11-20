@@ -4,6 +4,7 @@ import {
 	Line3,
 	Ray,
 	BufferAttribute,
+	Matrix4,
 } from 'three';
 import { MeshBVH } from 'three-mesh-bvh';
 import {
@@ -25,6 +26,8 @@ const _beneathLine = /* @__PURE__ */ new Line3();
 const _ray = /* @__PURE__ */ new Ray();
 const _vec = /* @__PURE__ */ new Vector3();
 const _overlapLine = /* @__PURE__ */ new Line3();
+const _localLine = /* @__PURE__ */ new Line3();
+const _invMat = /* @__PURE__ */ new Matrix4();
 
 class EdgeSet {
 
@@ -106,28 +109,51 @@ export class ProjectionGenerator {
 
 	}
 
-	*generate( bvh, options = {} ) {
+	*generate( scene, options = {} ) {
 
 		const { onProgress } = options;
 		const { sortEdges, iterationTime, angleThreshold, includeIntersectionEdges } = this;
 
-		if ( bvh instanceof BufferGeometry ) {
+		// collect the meshes
+		const meshes = [];
+		scene.traverse( c => {
 
-			bvh = new MeshBVH( bvh, { maxLeafTris: 1 } );
+			if ( c.geometry ) {
+
+				meshes.push( c );
+
+			}
+
+		} );
+
+		// initialize the bvhs
+		const bvhs = new Map();
+		let time = performance.now();
+		for ( let i = 0; i < meshes.length; i ++ ) {
+
+			if ( performance.now() - time > iterationTime ) {
+
+				yield;
+				time = performance.now();
+
+			}
+
+			const mesh = meshes[ i ];
+			const geometry = mesh.geometry;
+			const bvh = geometry.boundsTree || new MeshBVH( geometry, { maxLeafTris: 1 } );
+			bvhs.set( geometry, bvh );
 
 		}
 
-		// find the set of edges of intersecting triangles
-		const geometry = bvh.geometry;
 		const edgeGenerator = new EdgeGenerator();
 		edgeGenerator.iterationTime = iterationTime;
 		edgeGenerator.thresholdAngle = angleThreshold;
-		edgeGenerator.projectionDirection = UP_VECTOR;
+		edgeGenerator.projectionDirection.copy( UP_VECTOR );
 
-		let edges = edgeGenerator.getEdges( geometry );
+		let edges = yield* edgeGenerator.getEdgesGenerator( scene );
 		if ( includeIntersectionEdges ) {
 
-			yield* edgeGenerator.getIntersectionEdgesGenerator( bvh, edges );
+			yield* edgeGenerator.getIntersectionEdgesGenerator( scene, edges );
 
 		}
 
@@ -146,7 +172,7 @@ export class ProjectionGenerator {
 
 		// trim the candidate edges
 		const finalEdges = new EdgeSet();
-		let time = performance.now();
+		time = performance.now();
 		for ( let i = 0, l = edges.length; i < l; i ++ ) {
 
 			const line = edges[ i ];
@@ -159,123 +185,142 @@ export class ProjectionGenerator {
 			const lowestLineY = Math.min( line.start.y, line.end.y );
 			const highestLineY = Math.max( line.start.y, line.end.y );
 			const hiddenOverlaps = [];
-			bvh.shapecast( {
 
-				intersectsBounds: box => {
+			for ( let m = 0; m < meshes.length; m ++ ) {
 
-					// expand the bounding box to the bottom height of the line
-					box.min.y = Math.min( lowestLineY - 1e-6, box.min.y );
+				if ( performance.now() - time > iterationTime ) {
 
-					// get the line as a ray
-					const { origin, direction } = _ray;
-					origin.copy( line.start );
-					line.delta( direction ).normalize();
+					if ( onProgress ) {
 
-					// if the ray is inside the box then we intersect it
-					if ( box.containsPoint( origin ) ) {
-
-						return true;
+						const progress = i / edges.length;
+						onProgress( progress, finalEdges );
 
 					}
 
-					// check if the line segment intersects the box
-					if ( _ray.intersectBox( box, _vec ) ) {
-
-						return origin.distanceToSquared( _vec ) < line.distanceSq();
-
-					}
-
-					return false;
-
-				},
-
-				intersectsTriangle: tri => {
-
-					// skip the triangle if the triangle is completely below the line
-					const highestTriangleY = Math.max( tri.a.y, tri.b.y, tri.c.y );
-					if ( highestTriangleY <= lowestLineY ) {
-
-						return false;
-
-					}
-
-					// if the projected triangle is just a line then don't check it
-					if ( isYProjectedTriangleDegenerate( tri ) ) {
-
-						return false;
-
-					}
-
-					// if this line lies on a triangle edge then don't check for visual overlaps
-					// with this triangle
-					if ( isLineTriangleEdge( tri, line ) ) {
-
-						return false;
-
-					}
-
-					// Retrieve the portion of line that is below the plane - and skip the triangle if none
-					// of it is
-					const lowestTriangleY = Math.min( tri.a.y, tri.b.y, tri.c.y );
-					if ( highestLineY < lowestTriangleY ) {
-
-						_beneathLine.copy( line );
-
-					} else if ( ! trimToBeneathTriPlane( tri, line, _beneathLine ) ) {
-
-						return false;
-
-					}
-
-					// Cull overly small edges
-					if ( _beneathLine.distance() < DIST_THRESHOLD ) {
-
-						return false;
-
-					}
-
-					// compress the edge overlaps so we can easily tell if the whole edge is hidden already
-					// and exit early
-					if (
-						getProjectedLineOverlap( _beneathLine, tri, _overlapLine ) &&
-						appendOverlapRange( line, _overlapLine, hiddenOverlaps )
-					) {
-
-						compressEdgeOverlaps( hiddenOverlaps );
-
-					}
-
-					// if we're hiding the edge entirely now then skip further checks
-					if ( hiddenOverlaps.length !== 0 ) {
-
-						const [ d0, d1 ] = hiddenOverlaps[ hiddenOverlaps.length - 1 ];
-						return d0 === 0.0 && d1 === 1.0;
-
-					}
-
-					return false;
-
-				},
-
-			} );
-
-			// convert the overlap points to proper lines
-			overlapsToLines( line, hiddenOverlaps, finalEdges.edges );
-
-			const delta = performance.now() - time;
-			if ( delta > iterationTime ) {
-
-				if ( onProgress ) {
-
-					const progress = i / edges.length;
-					onProgress( progress, finalEdges );
+					yield;
+					time = performance.now();
 
 				}
 
-				yield;
-				time = performance.now();
+				const mesh = meshes[ m ];
+				const bvh = bvhs.get( mesh.geometry );
+				const matrix = mesh.matrixWorld;
+
+				// construct the line in the local mesh frame
+				_invMat.copy( matrix ).invert();
+				_localLine.copy( line ).applyMatrix4( _invMat );
+
+				// find the local lowest point to expand the box bounds to
+				const localLowestLineY = Math.min( _localLine.start.y, _localLine.end.y );
+
+				// get the line as a ray for bounds testing
+				const { origin, direction } = _ray;
+				origin.copy( _localLine.start );
+				_localLine.delta( direction ).normalize();
+
+				bvh.shapecast( {
+
+					intersectsBounds: box => {
+
+						// expand the bounding box to the bottom height of the line
+						box.min.y = Math.min( localLowestLineY - 1e-6, box.min.y );
+
+						// if the ray is inside the box then we intersect it
+						if ( box.containsPoint( origin ) ) {
+
+							return true;
+
+						}
+
+						// check if the line segment intersects the box
+						if ( _ray.intersectBox( box, _vec ) ) {
+
+							return origin.distanceToSquared( _vec ) < line.distanceSq();
+
+						}
+
+						return false;
+
+					},
+
+					intersectsTriangle: tri => {
+
+						tri.a.applyMatrix4( matrix );
+						tri.b.applyMatrix4( matrix );
+						tri.c.applyMatrix4( matrix );
+
+						// skip the triangle if the triangle is completely below the line
+						const highestTriangleY = Math.max( tri.a.y, tri.b.y, tri.c.y );
+						if ( highestTriangleY <= lowestLineY ) {
+
+							return false;
+
+						}
+
+						// if the projected triangle is just a line then don't check it
+						if ( isYProjectedTriangleDegenerate( tri ) ) {
+
+							return false;
+
+						}
+
+						// if this line lies on a triangle edge then don't check for visual overlaps
+						// with this triangle
+						if ( isLineTriangleEdge( tri, line ) ) {
+
+							return false;
+
+						}
+
+						// Retrieve the portion of line that is below the plane - and skip the triangle if none
+						// of it is
+						const lowestTriangleY = Math.min( tri.a.y, tri.b.y, tri.c.y );
+						if ( highestLineY < lowestTriangleY ) {
+
+							_beneathLine.copy( line );
+
+						} else if ( ! trimToBeneathTriPlane( tri, line, _beneathLine ) ) {
+
+							return false;
+
+						}
+
+						// Cull overly small edges
+						if ( _beneathLine.distance() < DIST_THRESHOLD ) {
+
+							return false;
+
+						}
+
+						// compress the edge overlaps so we can easily tell if the whole edge is hidden already
+						// and exit early
+						if (
+							getProjectedLineOverlap( _beneathLine, tri, _overlapLine ) &&
+							appendOverlapRange( line, _overlapLine, hiddenOverlaps )
+						) {
+
+							compressEdgeOverlaps( hiddenOverlaps );
+
+						}
+
+						// if we're hiding the edge entirely now then skip further checks
+						if ( hiddenOverlaps.length !== 0 ) {
+
+							const [ d0, d1 ] = hiddenOverlaps[ hiddenOverlaps.length - 1 ];
+							return d0 === 0.0 && d1 === 1.0;
+
+						}
+
+						return false;
+
+					},
+
+				} );
 
 			}
+
+			// convert the overlap points to proper lines
+			overlapsToLines( line, hiddenOverlaps, finalEdges.edges );
 
 		}
 
