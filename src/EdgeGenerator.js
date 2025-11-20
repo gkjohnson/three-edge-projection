@@ -3,7 +3,7 @@ import { MeshBVH } from 'three-mesh-bvh';
 import { generateEdges } from './utils/generateEdges.js';
 import { generateIntersectionEdges } from './utils/generateIntersectionEdges.js';
 
-const _mat = /* @__PURE__ */ new Matrix4();
+const _BtoA = /* @__PURE__ */ new Matrix4();
 
 // Class for generating edges for use with the projection generator. Functions take geometries or
 // Object3D instances. If an Object3D is passed then lines for all child meshes will be generated
@@ -35,11 +35,12 @@ export class EdgeGenerator {
 
 	*getEdgesGenerator( geometry, resultEdges = [] ) {
 
-		if ( geometry.isMesh ) {
+		const { projectionDirection, thresholdAngle, iterationTime } = this;
+		if ( geometry.isObject3D ) {
 
 			const meshes = getAllMeshes( geometry );
 			let localProjection = null;
-			if ( this.projectionDirection ) {
+			if ( projectionDirection ) {
 
 				localProjection = new Vector3();
 
@@ -50,15 +51,17 @@ export class EdgeGenerator {
 				const mesh = meshes[ i ];
 				if ( localProjection ) {
 
-					_mat.copy( mesh.matrixWorld ).invert();
-					localProjection.applyMatrix4( _mat );
+					_BtoA.copy( mesh.matrixWorld ).invert();
+					localProjection
+						.copy( projectionDirection )
+						.transformDirection( _BtoA );
 
 				}
 
 				const results = yield* generateEdges( mesh.geometry, [], {
 					projectionDirection: localProjection,
-					thresholdAngle: this.thresholdAngle,
-					iterationTime: this.iterationTime,
+					thresholdAngle: thresholdAngle,
+					iterationTime: iterationTime,
 				} );
 
 				transformEdges( results, mesh.matrixWorld );
@@ -71,9 +74,9 @@ export class EdgeGenerator {
 		} else {
 
 			return yield* generateEdges( geometry, resultEdges, {
-				projectionDirection: this.projectionDirection,
-				thresholdAngle: this.thresholdAngle,
-				iterationTime: this.iterationTime,
+				projectionDirection: projectionDirection,
+				thresholdAngle: thresholdAngle,
+				iterationTime: iterationTime,
 			} );
 
 		}
@@ -97,7 +100,7 @@ export class EdgeGenerator {
 	*getIntersectionEdgesGenerator( geometry, resultEdges = [] ) {
 
 		const { iterationTime } = this;
-		if ( geometry.isMesh ) {
+		if ( geometry.isObject3D ) {
 
 			// get the bounds trees from all geometry
 			const meshes = getAllMeshes( geometry );
@@ -137,12 +140,13 @@ export class EdgeGenerator {
 					const bvhA = bvhs.get( meshA.geometry );
 					const bvhB = bvhs.get( meshB.geometry );
 
-					_mat
+					// A-1 * B * v
+					_BtoA
 						.copy( meshA.matrixWorld )
 						.invert()
-						.premultiply( meshB.matrixWorld );
+						.multiply( meshB.matrixWorld );
 
-					const results = yield* generateIntersectionEdges( bvhA, bvhB, _mat, [], { iterationTime } );
+					const results = yield* generateIntersectionEdges( bvhA, bvhB, _BtoA, [], { iterationTime } );
 					transformEdges( results, meshA.matrixWorld );
 					resultEdges.push( ...results );
 
@@ -166,8 +170,8 @@ export class EdgeGenerator {
 
 			}
 
-			_mat.identity();
-			return yield* generateIntersectionEdges( bvh, bvh, _mat, resultEdges, { iterationTime } );
+			_BtoA.identity();
+			return yield* generateIntersectionEdges( bvh, bvh, _BtoA, resultEdges, { iterationTime } );
 
 		}
 
@@ -196,8 +200,7 @@ function transformEdges( list, matrix ) {
 
 	for ( let i = 0; i < list.length; i ++ ) {
 
-		list[ i ].start.applyMatrix4( matrix );
-		list[ i ].end.applyMatrix4( matrix );
+		list[ i ].applyMatrix4( matrix );
 
 	}
 
