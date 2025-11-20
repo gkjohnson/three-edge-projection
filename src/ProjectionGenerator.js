@@ -62,66 +62,18 @@ class EdgeSet {
 
 	}
 
+	reset() {
+
+		this.edges = [];
+
+	}
+
 }
 
-export class ProjectionGenerator {
+class ProjectedEdgeCollector {
 
-	constructor() {
+	constructor( scene ) {
 
-		this.sortEdges = true;
-		this.iterationTime = 30;
-		this.angleThreshold = 50;
-		this.includeIntersectionEdges = true;
-
-	}
-
-	generateAsync( geometry, options = {} ) {
-
-		return new Promise( ( resolve, reject ) => {
-
-			const { signal } = options;
-			const task = this.generate( geometry, options );
-			run();
-
-			function run() {
-
-				if ( signal && signal.aborted ) {
-
-					reject( new Error( 'ProjectionGenerator: Process aborted via AbortSignal.' ) );
-					return;
-
-				}
-
-				const result = task.next();
-				if ( result.done ) {
-
-					resolve( result.value );
-
-				} else {
-
-					requestAnimationFrame( run );
-
-				}
-
-			}
-
-
-		} );
-
-	}
-
-	*generate( scene, options = {} ) {
-
-		const { onProgress } = options;
-		const { sortEdges, iterationTime, angleThreshold, includeIntersectionEdges } = this;
-
-		if ( scene.isBufferGeometry ) {
-
-			scene = new Mesh( scene );
-
-		}
-
-		// collect the meshes
 		const meshes = [];
 		scene.traverse( c => {
 
@@ -133,8 +85,50 @@ export class ProjectionGenerator {
 
 		} );
 
-		// initialize the bvhs
-		const bvhs = new Map();
+		this.meshes = meshes;
+		this.bvhs = new Map();
+		this.edgeSet = new EdgeSet();
+		this.hiddenEdgeSet = new EdgeSet();
+		this.iterationTime = 30;
+
+	}
+
+	reset() {
+
+		this.edgeSet.reset();
+		this.hiddenEdgeSet.reset();
+
+	}
+
+	getVisibleLineGeometry() {
+
+		return this.edgeSet.getLineGeometry();
+
+	}
+
+	getHiddenLineGeometry() {
+
+		return this.hiddenEdgeSet.getLineGeometry();
+
+
+	}
+
+	addEdges( edges ) {
+
+		const currIterationTime = this.iterationTime;
+		this.iterationTime = Infinity;
+
+		const result = this.addEdgesGenerator( edges ).next().value;
+		this.iterationTime = currIterationTime;
+
+		return result;
+
+	}
+
+	*addEdgesGenerator( edges, options = {} ) {
+
+		const { onProgress = null } = options;
+		const { meshes, bvhs, edgeSet, hiddenEdgeSet, iterationTime } = this;
 		let time = performance.now();
 		for ( let i = 0; i < meshes.length; i ++ ) {
 
@@ -156,34 +150,6 @@ export class ProjectionGenerator {
 
 		}
 
-		const edgeGenerator = new EdgeGenerator();
-		edgeGenerator.iterationTime = iterationTime;
-		edgeGenerator.thresholdAngle = angleThreshold;
-		edgeGenerator.projectionDirection.copy( UP_VECTOR );
-
-		let edges = yield* edgeGenerator.getEdgesGenerator( scene );
-		if ( includeIntersectionEdges ) {
-
-			yield* edgeGenerator.getIntersectionEdgesGenerator( scene, edges );
-
-		}
-
-		// sort the edges from lowest to highest
-		if ( sortEdges ) {
-
-			edges.sort( ( a, b ) => {
-
-				return Math.min( a.start.y, a.end.y ) - Math.min( b.start.y, b.end.y );
-
-			} );
-
-		}
-
-		yield;
-
-		// trim the candidate edges
-		const finalEdges = new EdgeSet();
-		time = performance.now();
 		for ( let i = 0, l = edges.length; i < l; i ++ ) {
 
 			const line = edges[ i ];
@@ -204,7 +170,7 @@ export class ProjectionGenerator {
 					if ( onProgress ) {
 
 						const progress = i / edges.length;
-						onProgress( progress, finalEdges );
+						onProgress( progress, edgeSet );
 
 					}
 
@@ -331,11 +297,103 @@ export class ProjectionGenerator {
 			}
 
 			// convert the overlap points to proper lines
-			overlapsToLines( line, hiddenOverlaps, finalEdges.edges );
+			overlapsToLines( line, hiddenOverlaps, false, edgeSet.edges );
+			overlapsToLines( line, hiddenOverlaps, true, hiddenEdgeSet.edges );
 
 		}
 
-		return finalEdges.getLineGeometry( 0 );
+	}
+
+
+}
+
+export class ProjectionGenerator {
+
+	constructor() {
+
+		this.sortEdges = true;
+		this.iterationTime = 30;
+		this.angleThreshold = 50;
+		this.includeIntersectionEdges = true;
+
+	}
+
+	generateAsync( geometry, options = {} ) {
+
+		return new Promise( ( resolve, reject ) => {
+
+			const { signal } = options;
+			const task = this.generate( geometry, options );
+			run();
+
+			function run() {
+
+				if ( signal && signal.aborted ) {
+
+					reject( new Error( 'ProjectionGenerator: Process aborted via AbortSignal.' ) );
+					return;
+
+				}
+
+				const result = task.next();
+				if ( result.done ) {
+
+					resolve( result.value );
+
+				} else {
+
+					requestAnimationFrame( run );
+
+				}
+
+			}
+
+
+		} );
+
+	}
+
+	*generate( scene, options = {} ) {
+
+		const { onProgress } = options;
+		const { sortEdges, iterationTime, angleThreshold, includeIntersectionEdges } = this;
+
+		if ( scene.isBufferGeometry ) {
+
+			scene = new Mesh( scene );
+
+		}
+
+		const edgeGenerator = new EdgeGenerator();
+		edgeGenerator.iterationTime = iterationTime;
+		edgeGenerator.thresholdAngle = angleThreshold;
+		edgeGenerator.projectionDirection.copy( UP_VECTOR );
+
+		let edges = yield* edgeGenerator.getEdgesGenerator( scene );
+		if ( includeIntersectionEdges ) {
+
+			yield* edgeGenerator.getIntersectionEdgesGenerator( scene, edges );
+
+		}
+
+		// sort the edges from lowest to highest
+		if ( sortEdges ) {
+
+			edges.sort( ( a, b ) => {
+
+				return Math.min( a.start.y, a.end.y ) - Math.min( b.start.y, b.end.y );
+
+			} );
+
+		}
+
+		yield;
+
+		const collector = new ProjectedEdgeCollector( scene );
+		collector.iterationTime = iterationTime;
+		yield* collector.addEdgesGenerator( edges, { onProgress } );
+
+		return collector.getVisibleLineGeometry();
 
 	}
 

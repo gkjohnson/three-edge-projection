@@ -1,4 +1,4 @@
-import { Line3, Matrix4 } from 'three';
+import { Line3 } from 'three';
 import { isLineTriangleEdge } from './triangleLineUtils.js';
 
 // TODO: How can we add support for "iterationTime"?
