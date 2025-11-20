@@ -6,14 +6,13 @@ import { isLineTriangleEdge } from './triangleLineUtils.js';
 
 const OFFSET_EPSILON = 1e-6;
 const _line = new Line3();
-const _mat = new Matrix4();
-export function* generateIntersectionEdges( bvh, target = [], options = {} ) {
+export function* generateIntersectionEdges( bvhA, bvhB, matrixBToA, target = [], options = {} ) {
 
 	const {
 		iterationTime = 30,
 	} = options;
 
-	bvh.bvhcast( bvh, _mat, {
+	bvhA.bvhcast( bvhB, matrixBToA, {
 		intersectsTriangles: ( tri1, tri2 ) => {
 
 			if ( tri1.equals( tri2 ) ) {

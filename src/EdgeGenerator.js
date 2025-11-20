@@ -10,7 +10,6 @@ const _mat = /* @__PURE__ */ new Matrix4();
 // in world space
 // TODO:
 // - add support for progress functions
-// - add support for inter-geometry intersection edge detection
 export class EdgeGenerator {
 
 	constructor() {
@@ -100,13 +99,54 @@ export class EdgeGenerator {
 		const { iterationTime } = this;
 		if ( geometry.isMesh ) {
 
+			// get the bounds trees from all geometry
 			const meshes = getAllMeshes( geometry );
+			const bvhs = [];
+			let time = performance.now();
 			for ( let i = 0; i < meshes.length; i ++ ) {
 
+				if ( performance.now() - time > iterationTime ) {
+
+					yield;
+					time = performance.now();
+
+				}
+
 				const mesh = meshes[ i ];
-				const results = yield* this.getIntersectionEdgesGenerator( mesh.geometry, [] );
-				transformEdges( results, mesh.matrixWorld );
-				resultEdges.push( ...results );
+				const geometry = mesh.geometry;
+				const bvh = geometry.boundsTree || new MeshBVH( geometry, { maxLeafTris: 1 } );
+				bvhs.push( bvh );
+
+			}
+
+			// check each mesh against all others
+			time = performance.now();
+			for ( let i = 0; i < meshes.length; i ++ ) {
+
+				for ( let j = i; j < meshes.length; j ++ ) {
+
+					if ( performance.now() - time > iterationTime ) {
+
+						yield;
+						time = performance.now();
+
+					}
+
+					const meshA = meshes[ i ];
+					const meshB = meshes[ j ];
+					const bvhA = bvhs[ i ];
+					const bvhB = bvhs[ j ];
+
+					_mat
+						.copy( meshA.matrixWorld )
+						.invert()
+						.premultiply( meshB.matrixWorld );
+
+					const results = generateIntersectionEdges( bvhA, bvhB, _mat, [], { iterationTime } );
+					transformEdges( results, meshA.matrixWorld );
+					resultEdges.push( ...results );
+
+				}
 
 			}
 
@@ -126,7 +166,8 @@ export class EdgeGenerator {
 
 			}
 
-			return yield* generateIntersectionEdges( bvh, resultEdges, { iterationTime } );
+			_mat.identity();
+			return yield* generateIntersectionEdges( bvh, bvh, _mat, resultEdges, { iterationTime } );
 
 		}
 
