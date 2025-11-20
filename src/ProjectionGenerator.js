@@ -5,6 +5,7 @@ import {
 	Ray,
 	BufferAttribute,
 	Matrix4,
+	Mesh,
 } from 'three';
 import { MeshBVH } from 'three-mesh-bvh';
 import {
@@ -113,6 +114,12 @@ export class ProjectionGenerator {
 
 		const { onProgress } = options;
 		const { sortEdges, iterationTime, angleThreshold, includeIntersectionEdges } = this;
+
+		if ( scene.isBufferGeometry ) {
+
+			scene = new Mesh( scene );
+
+		}
 
 		// collect the meshes
 		const meshes = [];
