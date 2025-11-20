@@ -72,7 +72,13 @@ export class EdgeGenerator {
 				} );
 
 				transformEdges( results, mesh.matrixWorld );
-				resultEdges.push( ...results );
+
+				// push the edges individually to avoid stack overflow
+				for ( let i = 0; i < results.length; i ++ ) {
+
+					resultEdges.push( results[ i ] );
+
+				}
 
 			}
 
@@ -155,7 +161,14 @@ export class EdgeGenerator {
 
 					const results = yield* generateIntersectionEdges( bvhA, bvhB, _BtoA, [], { iterationTime } );
 					transformEdges( results, meshA.matrixWorld );
-					resultEdges.push( ...results );
+
+					// push the edges individually to avoid stack overflow
+					for ( let i = 0; i < results.length; i ++ ) {
+
+						resultEdges.push( results[ i ] );
+
+					}
+
 
 				}
 

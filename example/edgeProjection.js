@@ -5,8 +5,6 @@ import {
 	DirectionalLight,
 	AmbientLight,
 	Group,
-	MeshStandardMaterial,
-	MeshBasicMaterial,
 	BufferGeometry,
 	LineSegments,
 	LineBasicMaterial,
@@ -19,11 +17,9 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { ProjectionGenerator } from '..';
 import { ProjectionGeneratorWorker } from '../src/worker/ProjectionGeneratorWorker.js';
-import { generateEdges } from '../src/utils/generateEdges.js';
 
 const params = {
-	displayModel: 'color',
-	displayEdges: false,
+	displayModel: true,
 	displayProjection: true,
 	sortEdges: true,
 	includeIntersectionEdges: true,
@@ -49,7 +45,7 @@ const params = {
 
 const ANGLE_THRESHOLD = 50;
 let renderer, camera, scene, gui, controls;
-let lines, model, projection, group, shadedWhiteModel, whiteModel;
+let model, projection, group;
 let outputContainer;
 let worker;
 let task = null;
@@ -89,38 +85,6 @@ async function init() {
 		.loadAsync( 'https://raw.githubusercontent.com/gkjohnson/3d-demo-data/main/models/nasa-m2020/Perseverance.glb' );
 	model = gltf.scene;
 
-	const whiteMaterial = new MeshStandardMaterial( {
-		polygonOffset: true,
-		polygonOffsetFactor: 1,
-		polygonOffsetUnits: 1,
-	} );
-	shadedWhiteModel = model.clone();
-	shadedWhiteModel.traverse( c => {
-
-		if ( c.material ) {
-
-			c.material = whiteMaterial;
-
-		}
-
-	} );
-
-	const whiteBasicMaterial = new MeshBasicMaterial( {
-		polygonOffset: true,
-		polygonOffsetFactor: 1,
-		polygonOffsetUnits: 1,
-	} );
-	whiteModel = model.clone();
-	whiteModel.traverse( c => {
-
-		if ( c.material ) {
-
-			c.material = whiteBasicMaterial;
-
-		}
-
-	} );
-
 	group.updateMatrixWorld( true );
 
 	// center model
@@ -128,29 +92,7 @@ async function init() {
 	box.setFromObject( model, true );
 	box.getCenter( group.position ).multiplyScalar( - 1 );
 	group.position.y = Math.max( 0, - box.min.y ) + 1;
-	group.add( model, shadedWhiteModel, whiteModel );
-
-	// generate geometry line segments
-	lines = new Group();
-	model.traverse( c => {
-
-		if ( c.geometry ) {
-
-			const edges = generateEdges( c.geometry, undefined, ANGLE_THRESHOLD );
-			const points = edges.flatMap( line => [ line.start, line.end ] );
-			const geom = new BufferGeometry();
-			geom.setFromPoints( points );
-
-			const geomLines = new LineSegments( geom, new LineBasicMaterial( { color: 0x030303 } ) );
-			geomLines.position.copy( c.position );
-			geomLines.quaternion.copy( c.quaternion );
-			geomLines.scale.copy( c.scale );
-			lines.add( geomLines );
-
-		}
-
-	} );
-	group.add( lines );
+	group.add( model );
 
 	// create projection display mesh
 	projection = new LineSegments( new BufferGeometry(), new LineBasicMaterial( { color: 0x030303 } ) );
@@ -165,13 +107,7 @@ async function init() {
 	controls = new OrbitControls( camera, renderer.domElement );
 
 	gui = new GUI();
-	gui.add( params, 'displayModel', [
-		'none',
-		'color',
-		'shaded white',
-		// 'white',
-	] );
-	// gui.add( params, 'displayEdges' );
+	gui.add( params, 'displayModel' );
 	gui.add( params, 'displayProjection' );
 	gui.add( params, 'sortEdges' );
 	gui.add( params, 'includeIntersectionEdges' );
@@ -250,7 +186,8 @@ function* updateEdges( runTime = 30 ) {
 		generator.angleThreshold = ANGLE_THRESHOLD;
 		generator.includeIntersectionEdges = params.includeIntersectionEdges;
 
-		const task = generator.generate( mergedGeometry, {
+		model.updateMatrixWorld( true );
+		geometry = yield* generator.generate( mergedGeometry, {
 
 			onProgress: ( p, data ) => {
 
@@ -266,16 +203,6 @@ function* updateEdges( runTime = 30 ) {
 			},
 
 		} );
-
-		let result = task.next();
-		while ( ! result.done ) {
-
-			result = task.next();
-			yield;
-
-		}
-
-		geometry = result.value;
 
 	} else {
 
@@ -329,10 +256,7 @@ function render() {
 
 	}
 
-	model.visible = params.displayModel === 'color';
-	shadedWhiteModel.visible = params.displayModel === 'shaded white';
-	whiteModel.visible = params.displayModel === 'white';
-	lines.visible = params.displayEdges;
+	model.visible = params.displayModel;
 	projection.visible = params.displayProjection;
 
 	renderer.render( scene, camera );
