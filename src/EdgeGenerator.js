@@ -101,7 +101,7 @@ export class EdgeGenerator {
 
 			// get the bounds trees from all geometry
 			const meshes = getAllMeshes( geometry );
-			const bvhs = [];
+			const bvhs = new Map();
 			let time = performance.now();
 			for ( let i = 0; i < meshes.length; i ++ ) {
 
@@ -115,7 +115,7 @@ export class EdgeGenerator {
 				const mesh = meshes[ i ];
 				const geometry = mesh.geometry;
 				const bvh = geometry.boundsTree || new MeshBVH( geometry, { maxLeafTris: 1 } );
-				bvhs.push( bvh );
+				bvhs.set( geometry, bvh );
 
 			}
 
@@ -134,15 +134,15 @@ export class EdgeGenerator {
 
 					const meshA = meshes[ i ];
 					const meshB = meshes[ j ];
-					const bvhA = bvhs[ i ];
-					const bvhB = bvhs[ j ];
+					const bvhA = bvhs.get( meshA.geometry );
+					const bvhB = bvhs.get( meshB.geometry );
 
 					_mat
 						.copy( meshA.matrixWorld )
 						.invert()
 						.premultiply( meshB.matrixWorld );
 
-					const results = generateIntersectionEdges( bvhA, bvhB, _mat, [], { iterationTime } );
+					const results = yield* generateIntersectionEdges( bvhA, bvhB, _mat, [], { iterationTime } );
 					transformEdges( results, meshA.matrixWorld );
 					resultEdges.push( ...results );
 
@@ -196,8 +196,8 @@ function transformEdges( list, matrix ) {
 
 	for ( let i = 0; i < list.length; i ++ ) {
 
-		list[ i ].v0.applyMatrix4( matrix );
-		list[ i ].v1.applyMatrix4( matrix );
+		list[ i ].start.applyMatrix4( matrix );
+		list[ i ].end.applyMatrix4( matrix );
 
 	}
 
