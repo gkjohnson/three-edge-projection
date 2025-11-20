@@ -52,7 +52,7 @@
     "eslint-plugin-jest": "^23.20.0",
     "jest": "^27.2.4",
     "three": "^0.178.0",
-    "three-mesh-bvh": "^0.9.1",
+    "three-mesh-bvh": "^0.9.2",
     "vite": "^6.2.2"
   }
 }
