@@ -8,6 +8,9 @@ const _mat = /* @__PURE__ */ new Matrix4();
 // Class for generating edges for use with the projection generator. Functions take geometries or
 // Object3D instances. If an Object3D is passed then lines for all child meshes will be generated
 // in world space
+// TODO:
+// - add support for progress functions
+// - add support for inter-geometry intersection edge detection
 export class EdgeGenerator {
 
 	constructor() {
