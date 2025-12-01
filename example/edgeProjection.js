@@ -20,7 +20,7 @@ import { ProjectionGeneratorWorker } from '../src/worker/ProjectionGeneratorWork
 
 const params = {
 	displayModel: true,
-	displayProjection: true,
+	displayIntermediateProjection: false,
 	sortEdges: true,
 	includeIntersectionEdges: true,
 	useWorker: false,
@@ -44,6 +44,7 @@ const params = {
 };
 
 const ANGLE_THRESHOLD = 50;
+let needsRender = false;
 let renderer, camera, scene, gui, controls;
 let model, projection, group;
 let outputContainer;
@@ -103,17 +104,24 @@ async function init() {
 	camera.position.setScalar( 3.5 );
 	camera.updateProjectionMatrix();
 
+	needsRender = true;
+
 	// controls
 	controls = new OrbitControls( camera, renderer.domElement );
+	controls.addEventListener( 'change', () => {
+
+		needsRender = true;
+
+	} );
 
 	gui = new GUI();
-	gui.add( params, 'displayModel' );
-	gui.add( params, 'displayProjection' );
-	gui.add( params, 'sortEdges' );
-	gui.add( params, 'includeIntersectionEdges' );
+	gui.add( params, 'displayModel' ).onChange( () => needsRender = true );
+	gui.add( params, 'displayIntermediateProjection' ).onChange( () => needsRender = true );
+	gui.add( params, 'sortEdges' ).onChange( () => needsRender = true );
+	gui.add( params, 'includeIntersectionEdges' ).onChange( () => needsRender = true );
 	gui.add( params, 'useWorker' );
-	gui.add( params, 'rotate' );
-	gui.add( params, 'regenerate' );
+	gui.add( params, 'rotate' ).onChange( () => needsRender = true );
+	gui.add( params, 'regenerate' ).onChange( () => needsRender = true );
 
 	worker = new ProjectionGeneratorWorker();
 
@@ -192,10 +200,11 @@ function* updateEdges( runTime = 30 ) {
 			onProgress: ( p, data ) => {
 
 				outputContainer.innerText = `processing: ${ parseFloat( ( p * 100 ).toFixed( 2 ) ) }%`;
-				if ( params.displayProjection ) {
+				if ( params.displayIntermediateProjection ) {
 
 					projection.geometry.dispose();
 					projection.geometry = data.getVisibleLineGeometry();
+					needsRender = true;
 
 				}
 
@@ -238,6 +247,8 @@ function* updateEdges( runTime = 30 ) {
 		`merge geometry  : ${ mergeTime.toFixed( 2 ) }ms\n` +
 		`edge trimming   : ${ trimTime.toFixed( 2 ) }ms`;
 
+	needsRender = true;
+
 }
 
 
@@ -257,8 +268,12 @@ function render() {
 	}
 
 	model.visible = params.displayModel;
-	projection.visible = params.displayProjection;
 
-	renderer.render( scene, camera );
+	if ( needsRender ) {
+
+		renderer.render( scene, camera );
+		needsRender = false;
+
+	}
 
 }
