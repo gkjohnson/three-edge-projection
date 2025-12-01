@@ -1,5 +1,4 @@
 import { Vector3 } from 'three';
-
 const DIST_EPSILON = 1e-16;
 const _dir = /* @__PURE__ */ new Vector3();
 const _v0 = /* @__PURE__ */ new Vector3();
@@ -9,7 +8,34 @@ export function appendOverlapRange( line, overlapLine, overlapsTarget ) {
 	const result = getOverlapRange( line, overlapLine );
 	if ( result ) {
 
-		overlapsTarget.push( result );
+		let [ start, end ] = result;
+		let insertPoint = 0;
+		let deleteCount = 0;
+		for ( let i = 0, l = overlapsTarget.length; i < l; i ++ ) {
+
+			const [ otherStart, otherEnd ] = overlapsTarget[ i ];
+			if ( start <= otherEnd && end >= otherStart ) {
+
+				// check if there's overlap
+				start = Math.min( otherStart, start );
+				end = Math.max( otherEnd, end );
+				deleteCount ++;
+
+			} else if ( start >= otherStart ) {
+
+				// otherwise move the insertion point forward
+				insertPoint = i + 1;
+
+			} else {
+
+				break;
+
+			}
+
+		}
+
+		overlapsTarget.splice( insertPoint, deleteCount, [ start, end ] );
+
 		return true;
 
 	}

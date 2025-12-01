@@ -252,13 +252,9 @@ class ProjectedEdgeCollector {
 
 						// compress the edge overlaps so we can easily tell if the whole edge is hidden already
 						// and exit early
-						if (
-							getProjectedLineOverlap( _beneathLine, tri, _overlapLine ) &&
-							appendOverlapRange( line, _overlapLine, hiddenOverlaps )
-						) {
+						if ( getProjectedLineOverlap( _beneathLine, tri, _overlapLine ) ) {
 
-							// TODO: insert the overlap in the correct spot, instead
-							compressEdgeOverlaps( hiddenOverlaps );
+							appendOverlapRange( line, _overlapLine, hiddenOverlaps );
 
 						}
 
