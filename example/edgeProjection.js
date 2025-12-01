@@ -17,10 +17,11 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { ProjectionGenerator } from '..';
 import { ProjectionGeneratorWorker } from '../src/worker/ProjectionGeneratorWorker.js';
+import { MeshBVH, SAH } from 'three-mesh-bvh';
 
 const params = {
 	displayModel: true,
-	displayIntermediateProjection: false,
+	displayIntermediateProjection: true,
 	sortEdges: true,
 	includeIntersectionEdges: true,
 	useWorker: false,
@@ -34,6 +35,10 @@ const params = {
 		box.setFromObject( model, true );
 		box.getCenter( group.position ).multiplyScalar( - 1 );
 		group.position.y = Math.max( 0, - box.min.y ) + 1;
+
+		needsRender = true;
+
+		task = updateEdges();
 
 	},
 	regenerate: () => {
@@ -86,6 +91,16 @@ async function init() {
 		.loadAsync( 'https://raw.githubusercontent.com/gkjohnson/3d-demo-data/main/models/nasa-m2020/Perseverance.glb' );
 	model = gltf.scene;
 
+	model.traverse( c => {
+
+		if ( c.geometry && ! c.geometry.boundsTree ) {
+
+			c.geometry.boundsTree = new MeshBVH( c.geometry, { maxLeafTris: 1, strategy: SAH } );
+
+		}
+
+	} );
+
 	group.updateMatrixWorld( true );
 
 	// center model
@@ -120,7 +135,7 @@ async function init() {
 	gui.add( params, 'sortEdges' ).onChange( () => needsRender = true );
 	gui.add( params, 'includeIntersectionEdges' ).onChange( () => needsRender = true );
 	gui.add( params, 'useWorker' );
-	gui.add( params, 'rotate' ).onChange( () => needsRender = true );
+	gui.add( params, 'rotate' );
 	gui.add( params, 'regenerate' ).onChange( () => needsRender = true );
 
 	worker = new ProjectionGeneratorWorker();
@@ -197,7 +212,7 @@ function* updateEdges( runTime = 30 ) {
 		generator.includeIntersectionEdges = params.includeIntersectionEdges;
 
 		model.updateMatrixWorld( true );
-		geometry = yield* generator.generate( mergedGeometry, {
+		geometry = yield* generator.generate( model, {
 
 			onProgress: ( p, data ) => {
 
