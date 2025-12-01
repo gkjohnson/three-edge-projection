@@ -4,7 +4,6 @@ import {
 	Line3,
 	Ray,
 	BufferAttribute,
-	Matrix4,
 	Mesh,
 } from 'three';
 import { MeshBVH } from 'three-mesh-bvh';
@@ -27,8 +26,6 @@ const _beneathLine = /* @__PURE__ */ new Line3();
 const _ray = /* @__PURE__ */ new Ray();
 const _vec = /* @__PURE__ */ new Vector3();
 const _overlapLine = /* @__PURE__ */ new Line3();
-const _localLine = /* @__PURE__ */ new Line3();
-const _toLocalMatrix = /* @__PURE__ */ new Matrix4();
 
 function toLineGeometry( edges ) {
 
@@ -145,6 +142,7 @@ class ProjectedEdgeCollector {
 
 			const lowestLineY = Math.min( line.start.y, line.end.y );
 			const highestLineY = Math.max( line.start.y, line.end.y );
+			const lineDistSq = line.distanceSq();
 			const hiddenOverlaps = [];
 
 			for ( let m = 0; m < meshes.length; m ++ ) {
@@ -167,25 +165,22 @@ class ProjectedEdgeCollector {
 				const bvh = bvhs.get( mesh.geometry );
 				const { matrixWorld } = mesh;
 
-				// construct the line in the local mesh frame
-				_toLocalMatrix.copy( matrixWorld ).invert();
-				_localLine.copy( line ).applyMatrix4( _toLocalMatrix );
-
-				// find the local lowest point to expand the box bounds to
-				const localLowestLineY = Math.min( _localLine.start.y, _localLine.end.y );
-				const localLineDistSq = _localLine.distanceSq();
-
 				// get the line as a ray for bounds testing
 				const { origin, direction } = _ray;
-				origin.copy( _localLine.start );
-				_localLine.delta( direction ).normalize();
+				origin.copy( line.start );
+				line.delta( direction ).normalize();
 
+				// TODO: see if we can adjust any of these functions to operate locally in a way that's faster
+				// than being able to rely on the "projection" direction being "y". Currently everything is transformed
+				// to world space to account for this
 				bvh.shapecast( {
 
 					intersectsBounds: box => {
 
+						box.applyMatrix4( matrixWorld );
+
 						// expand the bounding box to the bottom height of the line
-						box.min.y = Math.min( localLowestLineY - 1e-6, box.min.y );
+						box.min.y = Math.min( lowestLineY - 1e-6, box.min.y );
 
 						// if the ray is inside the box then we intersect it
 						if ( box.containsPoint( origin ) ) {
@@ -197,7 +192,7 @@ class ProjectedEdgeCollector {
 						// check if the line segment intersects the box
 						if ( _ray.intersectBox( box, _vec ) ) {
 
-							return origin.distanceToSquared( _vec ) < localLineDistSq;
+							return origin.distanceToSquared( _vec ) < lineDistSq;
 
 						}
 
