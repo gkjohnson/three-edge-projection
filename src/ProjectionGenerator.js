@@ -28,7 +28,7 @@ const _ray = /* @__PURE__ */ new Ray();
 const _vec = /* @__PURE__ */ new Vector3();
 const _overlapLine = /* @__PURE__ */ new Line3();
 const _localLine = /* @__PURE__ */ new Line3();
-const _invMat = /* @__PURE__ */ new Matrix4();
+const _toLocalMatrix = /* @__PURE__ */ new Matrix4();
 
 function toLineGeometry( edges ) {
 
@@ -164,14 +164,15 @@ class ProjectedEdgeCollector {
 
 				const mesh = meshes[ m ];
 				const bvh = bvhs.get( mesh.geometry );
-				const matrix = mesh.matrixWorld;
+				const matrixWorld = mesh.matrixWorld;
 
 				// construct the line in the local mesh frame
-				_invMat.copy( matrix ).invert();
-				_localLine.copy( line ).applyMatrix4( _invMat );
+				_toLocalMatrix.copy( matrixWorld ).invert();
+				_localLine.copy( line ).applyMatrix4( _toLocalMatrix );
 
 				// find the local lowest point to expand the box bounds to
 				const localLowestLineY = Math.min( _localLine.start.y, _localLine.end.y );
+				const localLineDistSq = _localLine.distanceSq();
 
 				// get the line as a ray for bounds testing
 				const { origin, direction } = _ray;
@@ -195,7 +196,7 @@ class ProjectedEdgeCollector {
 						// check if the line segment intersects the box
 						if ( _ray.intersectBox( box, _vec ) ) {
 
-							return origin.distanceToSquared( _vec ) < line.distanceSq();
+							return origin.distanceToSquared( _vec ) < localLineDistSq;
 
 						}
 
@@ -259,6 +260,7 @@ class ProjectedEdgeCollector {
 							appendOverlapRange( line, _overlapLine, hiddenOverlaps )
 						) {
 
+							// TODO: insert the overlap in the correct spot, instead
 							compressEdgeOverlaps( hiddenOverlaps );
 
 						}
