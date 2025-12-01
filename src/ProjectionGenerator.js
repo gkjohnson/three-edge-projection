@@ -145,6 +145,11 @@ class ProjectedEdgeCollector {
 			const lineDistSq = line.distanceSq();
 			const hiddenOverlaps = [];
 
+			// Calculate ray once for this edge (used for bounds testing)
+			const { origin, direction } = _ray;
+			origin.copy( line.start );
+			line.delta( direction ).normalize();
+
 			for ( let m = 0; m < meshes.length; m ++ ) {
 
 				if ( performance.now() - time > iterationTime ) {
@@ -164,11 +169,6 @@ class ProjectedEdgeCollector {
 				const mesh = meshes[ m ];
 				const bvh = bvhs.get( mesh.geometry );
 				const { matrixWorld } = mesh;
-
-				// get the line as a ray for bounds testing
-				const { origin, direction } = _ray;
-				origin.copy( line.start );
-				line.delta( direction ).normalize();
 
 				// TODO: see if we can adjust any of these functions to operate locally in a way that's faster
 				// than being able to rely on the "projection" direction being "y". Currently everything is transformed
