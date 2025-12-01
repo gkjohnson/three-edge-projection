@@ -11,7 +11,7 @@ const _triangle = /* @__PURE__ */ new Triangle();
 export function* generateEdges( geometry, target = [], options = {} ) {
 
 	const {
-		projectionDir = UP_VECTOR,
+		projectionDirection = UP_VECTOR,
 		thresholdAngle = 1,
 		iterationTime = 30,
 	} = options;
@@ -94,12 +94,12 @@ export function* generateEdges( geometry, target = [], options = {} ) {
 				// get the dot product relative to the projection angle and
 				// add an epsilon for nearly vertical triangles
 				let projectionThreshold = false;
-				if ( projectionDir !== null ) {
+				if ( projectionDirection !== null ) {
 
-					let normDot = projectionDir.dot( _normal );
+					let normDot = projectionDirection.dot( _normal );
 					normDot = Math.abs( normDot ) < EPSILON ? 0 : normDot;
 
-					let otherDot = projectionDir.dot( otherNormal );
+					let otherDot = projectionDirection.dot( otherNormal );
 					otherDot = Math.abs( otherDot ) < EPSILON ? 0 : otherDot;
 
 					projectionThreshold = Math.sign( normDot ) !== Math.sign( otherDot );

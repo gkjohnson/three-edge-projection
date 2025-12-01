@@ -4,6 +4,7 @@ import { generateEdges } from './utils/generateEdges.js';
 import { generateIntersectionEdges } from './utils/generateIntersectionEdges.js';
 
 const _BtoA = /* @__PURE__ */ new Matrix4();
+const _toLocalMatrix = /* @__PURE__ */ new Matrix4();
 
 // Class for generating edges for use with the projection generator. Functions take geometries or
 // Object3D instances. If an Object3D is passed then lines for all child meshes will be generated
@@ -58,10 +59,11 @@ export class EdgeGenerator {
 				const mesh = meshes[ i ];
 				if ( localProjection ) {
 
-					_BtoA.copy( mesh.matrixWorld ).invert();
+					_toLocalMatrix.copy( mesh.matrixWorld ).invert();
 					localProjection
 						.copy( projectionDirection )
-						.transformDirection( _BtoA );
+						.transformDirection( _toLocalMatrix )
+						.normalize();
 
 				}
 
