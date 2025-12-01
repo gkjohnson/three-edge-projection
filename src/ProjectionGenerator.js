@@ -124,7 +124,7 @@ class ProjectedEdgeCollector {
 			const geometry = mesh.geometry;
 			if ( ! bvhs.has( geometry ) ) {
 
-				const bvh = geometry.boundsTree || new MeshBVH( geometry, { maxLeafTris: 1 } );
+				const bvh = geometry.boundsTree || new MeshBVH( geometry, { maxLeafTris: 1, maxDepth: 50 } );
 				bvhs.set( geometry, bvh );
 
 			}
@@ -362,7 +362,20 @@ export class ProjectionGenerator {
 
 			edges.sort( ( a, b ) => {
 
-				return Math.min( a.start.y, a.end.y ) - Math.min( b.start.y, b.end.y );
+				let delta = Math.min( a.start.y, a.end.y ) - Math.min( b.start.y, b.end.y );
+				if ( delta === 0 ) {
+
+				 	delta = Math.min( a.start.x, a.end.x ) - Math.min( b.start.x, b.end.x );
+
+				}
+
+				if ( delta === 0 ) {
+
+				 	delta = Math.min( a.start.z, a.end.z ) - Math.min( b.start.z, b.end.z );
+
+				}
+
+				return - delta;
 
 			} );
 
