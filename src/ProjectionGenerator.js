@@ -12,7 +12,7 @@ import {
 	isLineTriangleEdge,
 	isYProjectedLineDegenerate,
 } from './utils/triangleLineUtils.js';
-import { compressEdgeOverlaps, overlapsToLines } from './utils/overlapUtils.js';
+import { overlapsToLines } from './utils/overlapUtils.js';
 import { trimToBeneathTriPlane } from './utils/trimToBeneathTriPlane.js';
 import { getProjectedLineOverlap } from './utils/getProjectedLineOverlap.js';
 import { appendOverlapRange } from './utils/getProjectedOverlaps.js';

@@ -9,9 +9,30 @@ export function appendOverlapRange( line, overlapLine, overlapsTarget ) {
 	if ( result ) {
 
 		let [ start, end ] = result;
-		let insertPoint = 0;
+
+		// binary search to find where the for loop should begin iteration
+		let left = 0;
+		let right = overlapsTarget.length;
+		while ( left < right ) {
+
+			const mid = ( left + right ) >>> 1;
+			if ( overlapsTarget[ mid ][ 0 ] <= start ) {
+
+				left = mid + 1;
+
+			} else {
+
+				right = mid;
+
+			}
+
+		}
+
+		// start iteration from one position before (in case previous overlap
+		// extends into ours)
+		let insertPoint = Math.max( 0, left - 1 );
 		let deleteCount = 0;
-		for ( let i = 0, l = overlapsTarget.length; i < l; i ++ ) {
+		for ( let i = insertPoint, l = overlapsTarget.length; i < l; i ++ ) {
 
 			const [ otherStart, otherEnd ] = overlapsTarget[ i ];
 			if ( start <= otherEnd && end >= otherStart ) {
