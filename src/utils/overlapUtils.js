@@ -31,8 +31,7 @@ export function compressEdgeOverlaps( overlaps ) {
 // Converts the given array of overlaps into line segments
 export function overlapsToLines( line, overlaps, invert = false, target = [] ) {
 
-	compressEdgeOverlaps( overlaps );
-
+	// Function assumes the line overlaps are already compressed
 	let invOverlaps = [[ 0, 1 ]];
 	for ( let i = 0, l = overlaps.length; i < l; i ++ ) {
 
