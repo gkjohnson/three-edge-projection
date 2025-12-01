@@ -38,6 +38,6 @@ export function getOverlapRange( line, overlapLine ) {
 
 	}
 
-	return new Float32Array( [ d0, d1 ] );
+	return [ d0, d1 ];
 
 }

@@ -38,7 +38,7 @@ export function overlapsToLines( line, overlaps, invert = false, target = [] ) {
 		const invOverlap = invOverlaps[ i ];
 		const overlap = overlaps[ i ];
 		invOverlap[ 1 ] = overlap[ 0 ];
-		invOverlaps.push( new Float32Array( [ overlap[ 1 ], 1 ] ) );
+		invOverlaps.push( [ overlap[ 1 ], 1 ] );
 
 	}
 
