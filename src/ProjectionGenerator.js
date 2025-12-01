@@ -108,6 +108,7 @@ class ProjectedEdgeCollector {
 
 	}
 
+	// all edges are expected to be in world coordinates
 	*addEdgesGenerator( edges, options = {} ) {
 
 		const { onProgress = null } = options;
@@ -164,7 +165,7 @@ class ProjectedEdgeCollector {
 
 				const mesh = meshes[ m ];
 				const bvh = bvhs.get( mesh.geometry );
-				const matrixWorld = mesh.matrixWorld;
+				const { matrixWorld } = mesh;
 
 				// construct the line in the local mesh frame
 				_toLocalMatrix.copy( matrixWorld ).invert();
@@ -206,12 +207,13 @@ class ProjectedEdgeCollector {
 
 					intersectsTriangle: tri => {
 
-						tri.a.applyMatrix4( matrix );
-						tri.b.applyMatrix4( matrix );
-						tri.c.applyMatrix4( matrix );
+						const { a, b, c } = tri;
+						a.applyMatrix4( matrixWorld );
+						b.applyMatrix4( matrixWorld );
+						c.applyMatrix4( matrixWorld );
 
 						// skip the triangle if the triangle is completely below the line
-						const highestTriangleY = Math.max( tri.a.y, tri.b.y, tri.c.y );
+						const highestTriangleY = Math.max( a.y, b.y, c.y );
 						if ( highestTriangleY <= lowestLineY ) {
 
 							return false;
@@ -235,7 +237,7 @@ class ProjectedEdgeCollector {
 
 						// Retrieve the portion of line that is below the plane - and skip the triangle if none
 						// of it is
-						const lowestTriangleY = Math.min( tri.a.y, tri.b.y, tri.c.y );
+						const lowestTriangleY = Math.min( a.y, b.y, c.y );
 						if ( highestLineY < lowestTriangleY ) {
 
 							_beneathLine.copy( line );
