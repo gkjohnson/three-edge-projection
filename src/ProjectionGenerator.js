@@ -124,7 +124,7 @@ class ProjectedEdgeCollector {
 			const geometry = mesh.geometry;
 			if ( ! bvhs.has( geometry ) ) {
 
-				const bvh = geometry.boundsTree || new MeshBVH( geometry, { maxLeafTris: 1, maxDepth: 50 } );
+				const bvh = geometry.boundsTree || new MeshBVH( geometry );
 				bvhs.set( geometry, bvh );
 
 			}
@@ -383,7 +383,7 @@ export class ProjectionGenerator {
 		collector.iterationTime = iterationTime;
 		yield* collector.addEdgesGenerator( edges, { onProgress } );
 
-		return collector.getVisibleLineGeometry();
+		return collector;
 
 	}
 

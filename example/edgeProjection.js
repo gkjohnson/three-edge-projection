@@ -22,6 +22,7 @@ import { MeshBVH, SAH } from 'three-mesh-bvh';
 const params = {
 	displayModel: true,
 	displayIntermediateProjection: true,
+	displayDrawThroughProjection: false,
 	sortEdges: true,
 	includeIntersectionEdges: true,
 	useWorker: false,
@@ -51,7 +52,7 @@ const params = {
 const ANGLE_THRESHOLD = 50;
 let needsRender = false;
 let renderer, camera, scene, gui, controls;
-let model, projection, group;
+let model, projection, drawThroughProjection, group;
 let outputContainer;
 let worker;
 let task = null;
@@ -111,8 +112,10 @@ async function init() {
 	group.add( model );
 
 	// create projection display mesh
-	projection = new LineSegments( new BufferGeometry(), new LineBasicMaterial( { color: 0x030303 } ) );
-	scene.add( projection );
+	projection = new LineSegments( new BufferGeometry(), new LineBasicMaterial( { color: 0x030303, depthWrite: false } ) );
+	drawThroughProjection = new LineSegments( new BufferGeometry(), new LineBasicMaterial( { color: 0xcacaca, depthWrite: false } ) );
+	drawThroughProjection.renderOrder = - 1;
+	scene.add( projection, drawThroughProjection );
 
 	// camera setup
 	camera = new PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.01, 50 );
@@ -132,6 +135,7 @@ async function init() {
 	gui = new GUI();
 	gui.add( params, 'displayModel' ).onChange( () => needsRender = true );
 	gui.add( params, 'displayIntermediateProjection' ).onChange( () => needsRender = true );
+	gui.add( params, 'displayDrawThroughProjection' ).onChange( () => needsRender = true );
 	gui.add( params, 'sortEdges' ).onChange( () => needsRender = true );
 	gui.add( params, 'includeIntersectionEdges' ).onChange( () => needsRender = true );
 	gui.add( params, 'useWorker' );
@@ -212,23 +216,33 @@ function* updateEdges( runTime = 30 ) {
 		generator.includeIntersectionEdges = params.includeIntersectionEdges;
 
 		model.updateMatrixWorld( true );
-		geometry = yield* generator.generate( model, {
 
-			onProgress: ( p, data ) => {
+		const collection = yield* generator.generate( mergedGeometry, {
+
+			onProgress: ( p, collection ) => {
 
 				outputContainer.innerText = `processing: ${ parseFloat( ( p * 100 ).toFixed( 2 ) ) }%`;
 				if ( params.displayIntermediateProjection ) {
 
 					projection.geometry.dispose();
-					projection.geometry = data.getVisibleLineGeometry();
+					projection.geometry = collection.getVisibleLineGeometry();
+
+					drawThroughProjection.geometry.dispose();
+					drawThroughProjection.geometry = collection.getHiddenLineGeometry();
 					needsRender = true;
 
 				}
 
-
 			},
 
 		} );
+
+		drawThroughProjection.geometry.dispose();
+		drawThroughProjection.geometry = collection.getHiddenLineGeometry();
+
+		projection.geometry.dispose();
+		projection.geometry = collection.getVisibleLineGeometry();
+		geometry = projection.geometry;
 
 	} else {
 
@@ -285,6 +299,7 @@ function render() {
 	}
 
 	model.visible = params.displayModel;
+	drawThroughProjection.visible = params.displayDrawThroughProjection;
 
 	if ( needsRender ) {
 
