@@ -1,16 +1,17 @@
 import {
 	isYProjectedTriangleDegenerate,
 	isLineTriangleEdge,
-	isYProjectedLineDegenerate,
 } from './triangleLineUtils.js';
 import { trimToBeneathTriPlane } from './trimToBeneathTriPlane.js';
 import { getProjectedLineOverlap } from './getProjectedLineOverlap.js';
 import { appendOverlapRange } from './getProjectedOverlaps.js';
 import { Line3 } from 'three';
+import { ExtendedTriangle } from 'three-mesh-bvh';
 
 const DIST_THRESHOLD = 1e-10;
 const _beneathLine = /* @__PURE__ */ new Line3();
 const _overlapLine = /* @__PURE__ */ new Line3();
+const _tri = new ExtendedTriangle();
 
 /**
  * Uses bvhcast to compare edges BVH against mesh BVHs to find hidden line overlaps.
@@ -31,80 +32,93 @@ export function bvhcastEdges( edgesBvh, edges, meshes, bvhs, hiddenOverlapMap ) 
 		const bvh = bvhs.get( mesh.geometry );
 		const { matrixWorld } = mesh;
 
+		const edgeGeometry = edgesBvh.geometry;
+		const geometry = mesh.geometry;
+
 		edgesBvh.bvhcast( bvh, matrixWorld, {
 
-			intersectsTriangles: ( edgeTri, meshTri, edgeTriIndex, meshTriIndex ) => {
+			intersectsRanges: ( edgeOffset, edgeCount, meshOffset, meshCount ) => {
 
-				// Get the edge from the degenerate triangle index
-				const edgeIndex = edgesBvh.geometry.index.getX( edgeTriIndex * 3 ) / 3;
-				const line = edges[ edgeIndex ];
+				for ( let i = meshOffset, l = meshCount + meshOffset; i < l; i ++ ) {
 
-				// Skip degenerate projected lines
-				if ( isYProjectedLineDegenerate( line ) ) {
+					let i0 = 3 * i + 0;
+					let i1 = 3 * i + 1;
+					let i2 = 3 * i + 2;
+					if ( geometry.index ) {
 
-					return false;
+						i0 = geometry.index.getX( i0 );
+						i1 = geometry.index.getX( i1 );
+						i2 = geometry.index.getX( i2 );
+
+					}
+
+					// Transform mesh triangle to world space
+					const { a, b, c } = _tri;
+					a.fromBufferAttribute( geometry.attributes.position, i0 ).applyMatrix4( matrixWorld );
+					b.fromBufferAttribute( geometry.attributes.position, i1 ).applyMatrix4( matrixWorld );
+					c.fromBufferAttribute( geometry.attributes.position, i2 ).applyMatrix4( matrixWorld );
+					_tri.needsUpdate = true;
+
+					// Skip degenerate projected triangles
+					if ( isYProjectedTriangleDegenerate( _tri ) ) {
+
+						continue;
+
+					}
+
+					const highestTriangleY = Math.max( a.y, b.y, c.y );
+					const lowestTriangleY = Math.min( a.y, b.y, c.y );
+					for ( let e = edgeOffset, le = edgeCount + edgeOffset; e < le; e ++ ) {
+
+						const edgeIndex = edgeGeometry.index.getX( e * 3 ) / 3;
+						const _line = edges[ edgeIndex ];
+
+						// Calculate edge and triangle bounds
+						const lowestLineY = Math.min( _line.start.y, _line.end.y );
+						const highestLineY = Math.max( _line.start.y, _line.end.y );
+
+						// Skip if triangle is completely below the line
+						if ( highestTriangleY <= lowestLineY ) {
+
+							continue;
+
+						}
+
+						// Skip if this line lies on a triangle edge
+						if ( isLineTriangleEdge( _tri, _line ) ) {
+
+							continue;
+
+						}
+
+						// Retrieve the portion of line that is below the triangle plane
+						if ( highestLineY < lowestTriangleY ) {
+
+							_beneathLine.copy( _line );
+
+						} else if ( ! trimToBeneathTriPlane( _tri, _line, _beneathLine ) ) {
+
+							continue;
+
+						}
+
+						// Cull overly small edges
+						if ( _beneathLine.distance() < DIST_THRESHOLD ) {
+
+							continue;
+
+						}
+
+						// Calculate projected overlap and store in hiddenOverlapMap
+						if ( getProjectedLineOverlap( _beneathLine, _tri, _overlapLine ) ) {
+
+							appendOverlapRange( _line, _overlapLine, hiddenOverlapMap[ edgeIndex ] );
+
+						}
+
+					}
 
 				}
-
-				// Transform mesh triangle to world space
-				const { a, b, c } = meshTri;
-				a.applyMatrix4( matrixWorld );
-				b.applyMatrix4( matrixWorld );
-				c.applyMatrix4( matrixWorld );
-
-				// Calculate edge and triangle bounds
-				const lowestLineY = Math.min( line.start.y, line.end.y );
-				const highestLineY = Math.max( line.start.y, line.end.y );
-				const highestTriangleY = Math.max( a.y, b.y, c.y );
-				const lowestTriangleY = Math.min( a.y, b.y, c.y );
-
-				// Skip if triangle is completely below the line
-				if ( highestTriangleY <= lowestLineY ) {
-
-					return false;
-
-				}
-
-				// Skip degenerate projected triangles
-				if ( isYProjectedTriangleDegenerate( meshTri ) ) {
-
-					return false;
-
-				}
-
-				// Skip if this line lies on a triangle edge
-				if ( isLineTriangleEdge( meshTri, line ) ) {
-
-					return false;
-
-				}
-
-				// Retrieve the portion of line that is below the triangle plane
-				if ( highestLineY < lowestTriangleY ) {
-
-					_beneathLine.copy( line );
-
-				} else if ( ! trimToBeneathTriPlane( meshTri, line, _beneathLine ) ) {
-
-					return false;
-
-				}
-
-				// Cull overly small edges
-				if ( _beneathLine.distance() < DIST_THRESHOLD ) {
-
-					return false;
-
-				}
-
-				// Calculate projected overlap and store in hiddenOverlapMap
-				if ( getProjectedLineOverlap( _beneathLine, meshTri, _overlapLine ) ) {
-
-					appendOverlapRange( line, _overlapLine, hiddenOverlapMap[ edgeIndex ] );
-
-				}
-
-				return false;
 
 			},
 

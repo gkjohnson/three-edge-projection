@@ -133,6 +133,7 @@ class ProjectedEdgeCollector {
 
 		}
 
+		// initialize hidden line object
 		const hiddenOverlapMap = {};
 		for ( let i = 0; i < edges.length; i ++ ) {
 
@@ -140,19 +141,13 @@ class ProjectedEdgeCollector {
 
 		}
 
-		console.time( 'CONSTRUCTION' );
-		const edgesBvh = new MeshBVH( edgesToGeometry( edges ), { maxLeafTris: 10, strategy: SAH } );
-		console.timeEnd( 'CONSTRUCTION' );
+		// construct bvh
+		const edgesBvh = new MeshBVH( edgesToGeometry( edges ), { maxLeafTris: 2, strategy: SAH } );
 
-
-
-		// TODO: write code that compares the edgesBVH to the mesh BVHs using "bvhcast" to determine intersection
-		// The "edgesBVH" geometry has had the final vertex triangle heights artificially raised so that triangles above
-		// each edge can be found so they are checked. For each line / triangle intersection in the bvhcast callbacks we
-		// should write the hidden edges into the hiddenOverlapMap defined above.
-
-		// Use bvhcast to efficiently compare all edges against all meshes
+		// use bvhcast to compare all edges against all meshes
 		bvhcastEdges( edgesBvh, edges, meshes, bvhs, hiddenOverlapMap );
+
+		// construct the projections
 		for ( let i = 0; i < edges.length; i ++ ) {
 
 			// convert the overlap points to proper lines
@@ -162,7 +157,6 @@ class ProjectedEdgeCollector {
 			overlapsToLines( line, hiddenOverlaps, true, hiddenEdges );
 
 		}
-
 
 		return;
 
@@ -395,6 +389,9 @@ export class ProjectionGenerator {
 			yield* edgeGenerator.getIntersectionEdgesGenerator( scene, edges );
 
 		}
+
+		// filter out any degenerate projected edges
+		edges = edges.filter( e => ! isYProjectedLineDegenerate( e ) );
 
 		// sort the edges from lowest to highest
 		if ( sortEdges ) {
