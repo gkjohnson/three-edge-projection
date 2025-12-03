@@ -6,7 +6,7 @@ import {
 	BufferAttribute,
 	Mesh,
 } from 'three';
-import { MeshBVH } from 'three-mesh-bvh';
+import { MeshBVH, SAH } from 'three-mesh-bvh';
 import {
 	isYProjectedTriangleDegenerate,
 	isLineTriangleEdge,
@@ -17,6 +17,8 @@ import { trimToBeneathTriPlane } from './utils/trimToBeneathTriPlane.js';
 import { getProjectedLineOverlap } from './utils/getProjectedLineOverlap.js';
 import { appendOverlapRange } from './utils/getProjectedOverlaps.js';
 import { EdgeGenerator } from './EdgeGenerator.js';
+import { edgesToGeometry } from './utils/edgesToGeometry.js';
+import { bvhcastEdges } from './utils/bvhcastEdges.js';
 
 // these shared variables are not used across "yield" boundaries in the
 // generator so there's no risk of overwriting another tasks data
@@ -130,6 +132,47 @@ class ProjectedEdgeCollector {
 			}
 
 		}
+
+		const hiddenOverlapMap = {};
+		for ( let i = 0; i < edges.length; i ++ ) {
+
+			hiddenOverlapMap[ i ] = [];
+
+		}
+
+		console.time( 'CONSTRUCTION' );
+		const edgesBvh = new MeshBVH( edgesToGeometry( edges ), { maxLeafTris: 10, strategy: SAH } );
+		console.timeEnd( 'CONSTRUCTION' );
+
+
+
+		// TODO: write code that compares the edgesBVH to the mesh BVHs using "bvhcast" to determine intersection
+		// The "edgesBVH" geometry has had the final vertex triangle heights artificially raised so that triangles above
+		// each edge can be found so they are checked. For each line / triangle intersection in the bvhcast callbacks we
+		// should write the hidden edges into the hiddenOverlapMap defined above.
+
+		// Use bvhcast to efficiently compare all edges against all meshes
+		bvhcastEdges( edgesBvh, edges, meshes, bvhs, hiddenOverlapMap );
+		for ( let i = 0; i < edges.length; i ++ ) {
+
+			// convert the overlap points to proper lines
+			const line = edges[ i ];
+			const hiddenOverlaps = hiddenOverlapMap[ i ];
+			overlapsToLines( line, hiddenOverlaps, false, visibleEdges );
+			overlapsToLines( line, hiddenOverlaps, true, hiddenEdges );
+
+		}
+
+
+		return;
+
+
+
+
+
+
+
+
 
 		for ( let i = 0, l = edges.length; i < l; i ++ ) {
 
