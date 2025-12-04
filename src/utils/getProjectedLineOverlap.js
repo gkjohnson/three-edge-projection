@@ -57,9 +57,10 @@ export function getProjectedLineOverlap( line, triangle, lineTarget = new Line3(
 		let edgeIntersects = false;
 		if ( ! startIntersects && ! endIntersects && distToStart * distToEnd < 0 ) {
 
-			_edgeLine.start.copy( p1 );
-			_edgeLine.end.copy( p2 );
-			edgeIntersects = _orthoPlane.intersectLine( _edgeLine, _point );
+			// manual edge-plane intersection (faster than Plane.intersectLine)
+			const t = distToStart / ( distToStart - distToEnd );
+			_point.lerpVectors( p1, p2, t );
+			edgeIntersects = true;
 
 		}
 
@@ -100,7 +101,7 @@ export function getProjectedLineOverlap( line, triangle, lineTarget = new Line3(
 		// swap edges so they're facing in the same direction
 		if ( _dir.dot( _triDir ) < 0 ) {
 
-			let tmp = _triLine.start;
+			const tmp = _triLine.start;
 			_triLine.start = _triLine.end;
 			_triLine.end = tmp;
 
