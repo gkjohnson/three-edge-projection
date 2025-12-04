@@ -14,10 +14,8 @@ import {
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { ProjectionGenerator } from '..';
-import { ProjectionGeneratorWorker } from '../src/worker/ProjectionGeneratorWorker.js';
 import { MeshBVH, SAH } from 'three-mesh-bvh';
 
 const params = {
@@ -25,7 +23,6 @@ const params = {
 	displayIntermediateProjection: true,
 	displayDrawThroughProjection: false,
 	includeIntersectionEdges: true,
-	useWorker: false,
 	rotate: () => {
 
 		group.quaternion.random();
@@ -54,7 +51,6 @@ let needsRender = false;
 let renderer, camera, scene, gui, controls;
 let model, projection, drawThroughProjection, group;
 let outputContainer;
-let worker;
 let task = null;
 
 init();
@@ -117,6 +113,7 @@ async function init() {
 	box.getCenter( group.position ).multiplyScalar( - 1 );
 	group.position.y = Math.max( 0, - box.min.y ) + 1;
 	group.add( model );
+	group.updateMatrixWorld( true );
 
 	// create projection display mesh
 	projection = new LineSegments( new BufferGeometry(), new LineBasicMaterial( { color: 0x030303, depthWrite: false } ) );
@@ -144,11 +141,8 @@ async function init() {
 	gui.add( params, 'displayIntermediateProjection' ).onChange( () => needsRender = true );
 	gui.add( params, 'displayDrawThroughProjection' ).onChange( () => needsRender = true );
 	gui.add( params, 'includeIntersectionEdges' ).onChange( () => needsRender = true );
-	gui.add( params, 'useWorker' );
 	gui.add( params, 'rotate' );
 	gui.add( params, 'regenerate' ).onChange( () => needsRender = true );
-
-	worker = new ProjectionGeneratorWorker();
 
 	task = updateEdges();
 
@@ -173,34 +167,6 @@ function* updateEdges( runTime = 30 ) {
 
 	// transform and merge geometries to project into a single model
 	let timeStart = window.performance.now();
-	const geometries = [];
-	model.updateWorldMatrix( true, true );
-	model.traverse( c => {
-
-		if ( c.geometry ) {
-
-			const clone = c.geometry.clone();
-			clone.applyMatrix4( c.matrixWorld );
-			for ( const key in clone.attributes ) {
-
-				if ( key !== 'position' ) {
-
-					clone.deleteAttribute( key );
-
-				}
-
-			}
-
-			geometries.push( clone );
-
-		}
-
-	} );
-	const mergedGeometry = mergeGeometries( geometries, false );
-	const mergeTime = window.performance.now() - timeStart;
-
-	yield;
-
 	if ( params.includeIntersectionEdges ) {
 
 		outputContainer.innerText = 'processing: finding edge intersections...';
@@ -212,57 +178,23 @@ function* updateEdges( runTime = 30 ) {
 	// generate the candidate edges
 	timeStart = window.performance.now();
 
-	let geometry = null;
-	if ( ! params.useWorker ) {
+	const generator = new ProjectionGenerator();
+	generator.iterationTime = runTime;
+	generator.angleThreshold = ANGLE_THRESHOLD;
+	generator.includeIntersectionEdges = params.includeIntersectionEdges;
 
-		const generator = new ProjectionGenerator();
-		generator.iterationTime = runTime;
-		generator.angleThreshold = ANGLE_THRESHOLD;
-		generator.includeIntersectionEdges = params.includeIntersectionEdges;
+	const collection = yield* generator.generate( model );
+	drawThroughProjection.geometry.dispose();
+	drawThroughProjection.geometry = collection.getHiddenLineGeometry();
 
-		model.updateMatrixWorld( true );
-
-		const collection = yield* generator.generate( model );
-
-		drawThroughProjection.geometry.dispose();
-		drawThroughProjection.geometry = collection.getHiddenLineGeometry();
-
-		projection.geometry.dispose();
-		projection.geometry = collection.getVisibleLineGeometry();
-		geometry = projection.geometry;
-
-	} else {
-
-		worker
-			.generate( mergedGeometry, {
-				includeIntersectionEdges: params.includeIntersectionEdges,
-				onProgress: p => {
-
-					outputContainer.innerText = `processing: ${ parseFloat( ( p * 100 ).toFixed( 2 ) ) }%`;
-
-				},
-			} )
-			.then( result => {
-
-				geometry = result;
-
-			} );
-
-		while ( geometry === null ) {
-
-			yield;
-
-		}
-
-	}
-
+	projection.geometry.dispose();
+	projection.geometry = collection.getVisibleLineGeometry();
+	const geometry = projection.geometry;
 	const trimTime = window.performance.now() - timeStart;
 
 	projection.geometry.dispose();
 	projection.geometry = geometry;
-	outputContainer.innerText =
-		`merge geometry  : ${ mergeTime.toFixed( 2 ) }ms\n` +
-		`edge trimming   : ${ trimTime.toFixed( 2 ) }ms`;
+	outputContainer.innerText = `edge trimming   : ${ trimTime.toFixed( 2 ) }ms`;
 
 	needsRender = true;
 
