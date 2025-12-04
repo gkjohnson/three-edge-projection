@@ -20,7 +20,6 @@ import { MeshBVH, SAH } from 'three-mesh-bvh';
 
 const params = {
 	displayModel: true,
-	displayIntermediateProjection: true,
 	displayDrawThroughProjection: false,
 	includeIntersectionEdges: true,
 	rotate: () => {
@@ -105,8 +104,6 @@ async function init() {
 
 	} );
 
-	group.updateMatrixWorld( true );
-
 	// center model
 	const box = new Box3();
 	box.setFromObject( model, true );
@@ -138,7 +135,6 @@ async function init() {
 
 	gui = new GUI();
 	gui.add( params, 'displayModel' ).onChange( () => needsRender = true );
-	gui.add( params, 'displayIntermediateProjection' ).onChange( () => needsRender = true );
 	gui.add( params, 'displayDrawThroughProjection' ).onChange( () => needsRender = true );
 	gui.add( params, 'includeIntersectionEdges' ).onChange( () => needsRender = true );
 	gui.add( params, 'rotate' );
