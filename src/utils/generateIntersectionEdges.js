@@ -2,15 +2,10 @@ import { Line3 } from 'three';
 import { isLineTriangleEdge } from './triangleLineUtils.js';
 
 // TODO: How can we add support for "iterationTime"?
-// TODO: Fix byte offsets in three-mesh-bvh (check shapecast, bvhcast)
 
 const OFFSET_EPSILON = 1e-6;
 const _line = new Line3();
-export function* generateIntersectionEdges( bvhA, bvhB, matrixBToA, target = [], options = {} ) {
-
-	const {
-		iterationTime = 30,
-	} = options;
+export function generateIntersectionEdges( bvhA, bvhB, matrixBToA, target = [] ) {
 
 	bvhA.bvhcast( bvhB, matrixBToA, {
 		intersectsTriangles: ( tri1, tri2 ) => {

@@ -165,7 +165,7 @@ export class EdgeGenerator {
 						.invert()
 						.multiply( meshB.matrixWorld );
 
-					const results = yield* generateIntersectionEdges( bvhA, bvhB, _BtoA, [], { iterationTime } );
+					const results = generateIntersectionEdges( bvhA, bvhB, _BtoA, [], { iterationTime } );
 					transformEdges( results, meshA.matrixWorld );
 
 					// push the edges individually to avoid stack overflow
@@ -197,7 +197,7 @@ export class EdgeGenerator {
 			}
 
 			_BtoA.identity();
-			return yield* generateIntersectionEdges( bvh, bvh, _BtoA, resultEdges, { iterationTime } );
+			return generateIntersectionEdges( bvh, bvh, _BtoA, resultEdges, { iterationTime } );
 
 		}
 

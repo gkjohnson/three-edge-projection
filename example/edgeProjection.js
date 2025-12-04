@@ -24,8 +24,7 @@ const params = {
 	displayModel: true,
 	displayIntermediateProjection: true,
 	displayDrawThroughProjection: false,
-	sortEdges: true,
-	includeIntersectionEdges: false,
+	includeIntersectionEdges: true,
 	useWorker: false,
 	rotate: () => {
 
@@ -50,7 +49,7 @@ const params = {
 	},
 };
 
-const ANGLE_THRESHOLD = 5;
+const ANGLE_THRESHOLD = 50;
 let needsRender = false;
 let renderer, camera, scene, gui, controls;
 let model, projection, drawThroughProjection, group;
@@ -90,8 +89,8 @@ async function init() {
 
 	const gltf = await new GLTFLoader()
 		.setMeshoptDecoder( MeshoptDecoder )
-		// .loadAsync( 'https://raw.githubusercontent.com/gkjohnson/3d-demo-data/main/models/nasa-m2020/Perseverance.glb' );
-		.loadAsync( new URL( './simple.glb', import.meta.url ).toString() );
+		.loadAsync( 'https://raw.githubusercontent.com/gkjohnson/3d-demo-data/main/models/nasa-m2020/Perseverance.glb' );
+		// .loadAsync( new URL( './simple.glb', import.meta.url ).toString() );
 	model = gltf.scene;
 
 	model.traverse( c => {
@@ -144,7 +143,6 @@ async function init() {
 	gui.add( params, 'displayModel' ).onChange( () => needsRender = true );
 	gui.add( params, 'displayIntermediateProjection' ).onChange( () => needsRender = true );
 	gui.add( params, 'displayDrawThroughProjection' ).onChange( () => needsRender = true );
-	gui.add( params, 'sortEdges' ).onChange( () => needsRender = true );
 	gui.add( params, 'includeIntersectionEdges' ).onChange( () => needsRender = true );
 	gui.add( params, 'useWorker' );
 	gui.add( params, 'rotate' );
@@ -218,7 +216,6 @@ function* updateEdges( runTime = 30 ) {
 	if ( ! params.useWorker ) {
 
 		const generator = new ProjectionGenerator();
-		generator.sortEdges = params.sortEdges;
 		generator.iterationTime = runTime;
 		generator.angleThreshold = ANGLE_THRESHOLD;
 		generator.includeIntersectionEdges = params.includeIntersectionEdges;
@@ -238,7 +235,6 @@ function* updateEdges( runTime = 30 ) {
 
 		worker
 			.generate( mergedGeometry, {
-				sortEdges: params.sortEdges,
 				includeIntersectionEdges: params.includeIntersectionEdges,
 				onProgress: p => {
 
