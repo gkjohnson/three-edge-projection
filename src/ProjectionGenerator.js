@@ -94,9 +94,8 @@ class ProjectedEdgeCollector {
 	}
 
 	// all edges are expected to be in world coordinates
-	*addEdgesGenerator( edges, options = {} ) {
+	*addEdgesGenerator( edges ) {
 
-		const { onProgress = null } = options;
 		const { meshes, bvhs, visibleEdges, hiddenEdges, iterationTime } = this;
 		let time = performance.now();
 		for ( let i = 0; i < meshes.length; i ++ ) {
@@ -129,18 +128,31 @@ class ProjectedEdgeCollector {
 
 		// construct bvh
 		const edgesBvh = new MeshBVH( edgesToGeometry( edges ), { maxLeafTris: 2, strategy: SAH } );
-
+		time = performance.now();
 		for ( let m = 0; m < meshes.length; m ++ ) {
+
+			if ( performance.now() - time > iterationTime ) {
+
+				yield;
+				time = performance.now();
+
+			}
 
 			// use bvhcast to compare all edges against all meshes
 			const { geometry, matrixWorld } = meshes[ m ];
 			bvhcastEdges( edgesBvh, edges, bvhs.get( geometry ), matrixWorld, hiddenOverlapMap );
-			yield;
 
 		}
 
 		// construct the projections
 		for ( let i = 0; i < edges.length; i ++ ) {
+
+			if ( performance.now() - time > iterationTime ) {
+
+				yield;
+				time = performance.now();
+
+			}
 
 			// convert the overlap points to proper lines
 			const line = edges[ i ];
@@ -158,7 +170,6 @@ export class ProjectionGenerator {
 
 	constructor() {
 
-		this.sortEdges = true;
 		this.iterationTime = 30;
 		this.angleThreshold = 50;
 		this.includeIntersectionEdges = true;
@@ -200,10 +211,9 @@ export class ProjectionGenerator {
 
 	}
 
-	*generate( scene, options = {} ) {
+	*generate( scene ) {
 
-		const { onProgress } = options;
-		const { sortEdges, iterationTime, angleThreshold, includeIntersectionEdges } = this;
+		const { iterationTime, angleThreshold, includeIntersectionEdges } = this;
 
 		if ( scene.isBufferGeometry ) {
 
@@ -226,35 +236,11 @@ export class ProjectionGenerator {
 		// filter out any degenerate projected edges
 		edges = edges.filter( e => ! isYProjectedLineDegenerate( e ) );
 
-		// sort the edges from lowest to highest
-		if ( sortEdges ) {
-
-			edges.sort( ( a, b ) => {
-
-				let delta = Math.min( a.start.y, a.end.y ) - Math.min( b.start.y, b.end.y );
-				if ( delta === 0 ) {
-
-				 	delta = Math.min( a.start.x, a.end.x ) - Math.min( b.start.x, b.end.x );
-
-				}
-
-				if ( delta === 0 ) {
-
-				 	delta = Math.min( a.start.z, a.end.z ) - Math.min( b.start.z, b.end.z );
-
-				}
-
-				return - delta;
-
-			} );
-
-		}
-
 		yield;
 
 		const collector = new ProjectedEdgeCollector( scene );
 		collector.iterationTime = iterationTime;
-		yield* collector.addEdgesGenerator( edges, { onProgress } );
+		yield* collector.addEdgesGenerator( edges );
 
 		return collector;
 

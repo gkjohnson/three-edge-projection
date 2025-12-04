@@ -9,6 +9,7 @@ import {
 	LineSegments,
 	LineBasicMaterial,
 	PerspectiveCamera,
+	MeshStandardMaterial,
 } from 'three';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
@@ -24,7 +25,7 @@ const params = {
 	displayIntermediateProjection: true,
 	displayDrawThroughProjection: false,
 	sortEdges: true,
-	includeIntersectionEdges: true,
+	includeIntersectionEdges: false,
 	useWorker: false,
 	rotate: () => {
 
@@ -49,7 +50,7 @@ const params = {
 	},
 };
 
-const ANGLE_THRESHOLD = 50;
+const ANGLE_THRESHOLD = 5;
 let needsRender = false;
 let renderer, camera, scene, gui, controls;
 let model, projection, drawThroughProjection, group;
@@ -89,10 +90,17 @@ async function init() {
 
 	const gltf = await new GLTFLoader()
 		.setMeshoptDecoder( MeshoptDecoder )
-		.loadAsync( 'https://raw.githubusercontent.com/gkjohnson/3d-demo-data/main/models/nasa-m2020/Perseverance.glb' );
+		// .loadAsync( 'https://raw.githubusercontent.com/gkjohnson/3d-demo-data/main/models/nasa-m2020/Perseverance.glb' );
+		.loadAsync( new URL( './simple.glb', import.meta.url ).toString() );
 	model = gltf.scene;
 
 	model.traverse( c => {
+
+		if ( c.material ) {
+
+			c.material = new MeshStandardMaterial( { flatShading: true } );
+
+		}
 
 		if ( c.geometry && ! c.geometry.boundsTree ) {
 
@@ -118,8 +126,8 @@ async function init() {
 	scene.add( projection, drawThroughProjection );
 
 	// camera setup
-	camera = new PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.01, 50 );
-	camera.position.setScalar( 3.5 );
+	camera = new PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.01, 1e3 );
+	camera.position.setScalar( 3.5 ).multiplyScalar( 10 );
 	camera.updateProjectionMatrix();
 
 	needsRender = true;
@@ -217,25 +225,7 @@ function* updateEdges( runTime = 30 ) {
 
 		model.updateMatrixWorld( true );
 
-		const collection = yield* generator.generate( mergedGeometry, {
-
-			onProgress: ( p, collection ) => {
-
-				outputContainer.innerText = `processing: ${ parseFloat( ( p * 100 ).toFixed( 2 ) ) }%`;
-				if ( params.displayIntermediateProjection ) {
-
-					projection.geometry.dispose();
-					projection.geometry = collection.getVisibleLineGeometry();
-
-					drawThroughProjection.geometry.dispose();
-					drawThroughProjection.geometry = collection.getHiddenLineGeometry();
-					needsRender = true;
-
-				}
-
-			},
-
-		} );
+		const collection = yield* generator.generate( model );
 
 		drawThroughProjection.geometry.dispose();
 		drawThroughProjection.geometry = collection.getHiddenLineGeometry();
