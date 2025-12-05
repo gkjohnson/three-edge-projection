@@ -139,8 +139,8 @@ class ProjectedEdgeCollector {
 			}
 
 			// use bvhcast to compare all edges against all meshes
-			const { geometry, matrixWorld } = meshes[ m ];
-			bvhcastEdges( edgesBvh, edges, bvhs.get( geometry ), matrixWorld, hiddenOverlapMap );
+			const mesh = meshes[ m ];
+			bvhcastEdges( edgesBvh, edges, bvhs.get( mesh.geometry ), mesh, hiddenOverlapMap );
 
 		}
 

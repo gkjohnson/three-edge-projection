@@ -1,22 +1,27 @@
-import {
-	isYProjectedTriangleDegenerate,
-	isLineTriangleEdge,
-} from './triangleLineUtils.js';
+import { isLineTriangleEdge } from './triangleLineUtils.js';
 import { trimToBeneathTriPlane } from './trimToBeneathTriPlane.js';
 import { getProjectedLineOverlap } from './getProjectedLineOverlap.js';
 import { appendOverlapRange } from './getProjectedOverlaps.js';
-import { Line3 } from 'three';
+import { BackSide, DoubleSide, Line3, Vector3 } from 'three';
 import { ExtendedTriangle } from 'three-mesh-bvh';
 
+const UP_VECTOR = new Vector3( 0, 1, 0 );
 const DIST_THRESHOLD = 1e-10;
 const _beneathLine = /* @__PURE__ */ new Line3();
 const _overlapLine = /* @__PURE__ */ new Line3();
 const _tri = /* @__PURE__ */ new ExtendedTriangle();
+_tri.update = () => {
 
-export function bvhcastEdges( edgesBvh, edges, bvh, matrixWorld, hiddenOverlapMap ) {
+	// override the "update" function so we only calculate the piece we need
+	_tri.plane.setFromCoplanarPoints( ..._tri.points );
+
+};
+
+export function bvhcastEdges( edgesBvh, edges, bvh, mesh, hiddenOverlapMap ) {
 
 	const edgeGeometry = edgesBvh.geometry;
-	const geometry = bvh.geometry;
+	const { geometry, matrixWorld, material } = mesh;
+	const side = material.side;
 
 	edgesBvh.bvhcast( bvh, matrixWorld, {
 
@@ -41,11 +46,17 @@ export function bvhcastEdges( edgesBvh, edges, bvh, matrixWorld, hiddenOverlapMa
 				b.fromBufferAttribute( geometry.attributes.position, i1 ).applyMatrix4( matrixWorld );
 				c.fromBufferAttribute( geometry.attributes.position, i2 ).applyMatrix4( matrixWorld );
 				_tri.needsUpdate = true;
+				_tri.update();
 
-				// Skip degenerate projected triangles
-				if ( isYProjectedTriangleDegenerate( _tri ) ) {
+				// back face culling
+				if ( side !== DoubleSide ) {
 
-					continue;
+					const faceUp = _tri.plane.normal.dot( UP_VECTOR ) > 0;
+					if ( faceUp === ( side === BackSide ) ) {
+
+						continue;
+
+					}
 
 				}
 

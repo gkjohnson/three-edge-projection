@@ -34,6 +34,10 @@ export function generateIntersectionEdges( bvhA, bvhB, matrixBToA, target = [] )
 
 			}
 
+			// TODO: Is this correct? Should we just ignore lines if the edge is on the edge
+			// of _both_ triangles?
+			// TODO: Consider checking if the triangles are connected at the edges first as
+			// an optimization?
 			if (
 				tri1.intersectsTriangle( tri2, _line, true ) &&
 				! isLineTriangleEdge( tri1, _line ) &&
