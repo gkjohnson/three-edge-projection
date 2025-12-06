@@ -87,30 +87,27 @@ async function init() {
 
 	if ( window.location.hash === '#lego' ) {
 
+		// init loader
 		const loader = new LDrawLoader();
-
 		loader.setConditionalLineMaterial( LDrawConditionalLineMaterial )
 		await loader.preloadMaterials( 'https://raw.githubusercontent.com/gkjohnson/ldraw-parts-library/master/colors/ldcfgalt.ldr' );
-		const result = await loader
+
+		// load model
+		model = await loader
 			.setPartsLibraryPath( 'https://raw.githubusercontent.com/gkjohnson/ldraw-parts-library/master/complete/ldraw/' )
 			.loadAsync( 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/ldraw/officialLibrary/models/1621-1-LunarMPVVehicle.mpd_Packed.mpd' );
 
-		model = result;
+		// adjust model transforms
 		model.scale.setScalar( 0.01 );
 		model.rotation.x = Math.PI;
 
+		// remove lines
 		const toRemove = [];
 		model.traverse( c => {
 
 			if ( c.isLine ) {
 
 				toRemove.push( c );
-
-			}
-
-			if ( c.isMesh ) {
-
-				meshes.push( c );
 
 			}
 
@@ -127,20 +124,16 @@ async function init() {
 		const gltf = await new GLTFLoader()
 			.setMeshoptDecoder( MeshoptDecoder )
 			.loadAsync( 'https://raw.githubusercontent.com/gkjohnson/3d-demo-data/main/models/nasa-m2020/Perseverance.glb' );
-			// .loadAsync( new URL( './simple.glb', import.meta.url ).toString() );
 		model = gltf.scene;
 
 	}
+
+	// initialize BVHs
 	model.traverse( c => {
-
-		if ( c.material ) {
-
-			c.material = new MeshStandardMaterial( { flatShading: true } );
-
-		}
 
 		if ( c.geometry && ! c.geometry.boundsTree ) {
 
+			c.geometry.clearGroups();
 			c.geometry.boundsTree = new MeshBVH( c.geometry, { maxLeafTris: 1, strategy: SAH } );
 
 		}
@@ -163,7 +156,7 @@ async function init() {
 
 	// camera setup
 	camera = new PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.01, 1e3 );
-	camera.position.setScalar( 3.5 ).multiplyScalar( 10 );
+	camera.position.setScalar( 3.5 );//.multiplyScalar( 10 );
 	camera.updateProjectionMatrix();
 
 	needsRender = true;
@@ -183,9 +176,9 @@ async function init() {
 	gui.add( params, 'rotate' );
 	gui.add( params, 'regenerate' ).onChange( () => needsRender = true );
 
-	task = updateEdges();
-
 	render();
+
+	task = updateEdges();
 
 	window.addEventListener( 'resize', function () {
 
@@ -212,7 +205,22 @@ function* updateEdges( runTime = 30 ) {
 	generator.angleThreshold = ANGLE_THRESHOLD;
 	generator.includeIntersectionEdges = params.includeIntersectionEdges;
 
-	const collection = yield* generator.generate( model );
+	const collection = yield* generator.generate( model, {
+		onProgress: ( msg, tot, edges ) => {
+
+			outputContainer.innerText = msg;
+			if ( tot ) outputContainer.innerText += ' ' + ( 100 * tot ).toFixed( 1 ) + '%';
+
+			if ( edges ) {
+
+				projection.geometry.dispose();
+				projection.geometry = edges.getVisibleLineGeometry();
+				needsRender = true;
+
+			}
+
+		},
+	} );
 	drawThroughProjection.geometry.dispose();
 	drawThroughProjection.geometry = collection.getHiddenLineGeometry();
 

@@ -71,12 +71,12 @@ class ProjectedEdgeCollector {
 
 	}
 
-	addEdges( edges ) {
+	addEdges( ...args ) {
 
 		const currIterationTime = this.iterationTime;
 		this.iterationTime = Infinity;
 
-		const result = this.addEdgesGenerator( edges ).next().value;
+		const result = this.addEdgesGenerator( ...args ).next().value;
 		this.iterationTime = currIterationTime;
 
 		return result;
@@ -84,7 +84,7 @@ class ProjectedEdgeCollector {
 	}
 
 	// all edges are expected to be in world coordinates
-	*addEdgesGenerator( edges ) {
+	*addEdgesGenerator( edges, options = {} ) {
 
 		const { meshes, bvhs, visibleEdges, hiddenEdges, iterationTime } = this;
 		let time = performance.now();
@@ -122,6 +122,12 @@ class ProjectedEdgeCollector {
 		for ( let m = 0; m < meshes.length; m ++ ) {
 
 			if ( performance.now() - time > iterationTime ) {
+
+				if ( options.onProgress ) {
+
+					options.onProgress( m, meshes.length );
+
+				}
 
 				yield;
 				time = performance.now();
@@ -201,9 +207,10 @@ export class ProjectionGenerator {
 
 	}
 
-	*generate( scene ) {
+	*generate( scene, options ) {
 
 		const { iterationTime, angleThreshold, includeIntersectionEdges } = this;
+		const { onProgress = () => {} } = options;
 
 		if ( scene.isBufferGeometry ) {
 
@@ -216,21 +223,33 @@ export class ProjectionGenerator {
 		edgeGenerator.thresholdAngle = angleThreshold;
 		edgeGenerator.projectionDirection.copy( UP_VECTOR );
 
-		let edges = yield* edgeGenerator.getEdgesGenerator( scene );
+		onProgress( 'Extracting edges' );
+		let edges = [];
+		yield* edgeGenerator.getEdgesGenerator( scene, edges, options );
 		if ( includeIntersectionEdges ) {
 
-			yield* edgeGenerator.getIntersectionEdgesGenerator( scene, edges );
+			onProgress( 'Extracting self-intersecting edges' );
+			yield* edgeGenerator.getIntersectionEdgesGenerator( scene, edges, options );
 
 		}
 
 		// filter out any degenerate projected edges
+		onProgress( 'Filtering edges' );
 		edges = edges.filter( e => ! isYProjectedLineDegenerate( e ) );
 
 		yield;
 
 		const collector = new ProjectedEdgeCollector( scene );
 		collector.iterationTime = iterationTime;
-		yield* collector.addEdgesGenerator( edges );
+
+		onProgress( 'Clipping edges' );
+		yield* collector.addEdgesGenerator( edges, {
+			onProgress: ! onProgress ? null : ( prog, tot ) => {
+
+				onProgress( 'Clipping edges', prog / tot, collector );
+
+			},
+		} );
 
 		return collector;
 
