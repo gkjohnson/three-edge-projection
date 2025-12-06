@@ -32,6 +32,7 @@ const params = {
 		box.setFromObject( model, true );
 		box.getCenter( group.position ).multiplyScalar( - 1 );
 		group.position.y = Math.max( 0, - box.min.y ) + 1;
+		group.updateMatrixWorld( true );
 
 		needsRender = true;
 
@@ -159,21 +160,11 @@ async function init() {
 
 function* updateEdges( runTime = 30 ) {
 
-	outputContainer.innerText = 'processing: --';
+	outputContainer.innerText = 'Generating...';
+	projection.geometry.dispose();
+	projection.geometry = new BufferGeometry();
 
-	// transform and merge geometries to project into a single model
-	let timeStart = window.performance.now();
-	if ( params.includeIntersectionEdges ) {
-
-		outputContainer.innerText = 'processing: finding edge intersections...';
-		projection.geometry.dispose();
-		projection.geometry = new BufferGeometry();
-
-	}
-
-	// generate the candidate edges
-	timeStart = window.performance.now();
-
+	const timeStart = window.performance.now();
 	const generator = new ProjectionGenerator();
 	generator.iterationTime = runTime;
 	generator.angleThreshold = ANGLE_THRESHOLD;
@@ -190,7 +181,7 @@ function* updateEdges( runTime = 30 ) {
 
 	projection.geometry.dispose();
 	projection.geometry = geometry;
-	outputContainer.innerText = `edge trimming   : ${ trimTime.toFixed( 2 ) }ms`;
+	outputContainer.innerText = `Generation time: ${ trimTime.toFixed( 2 ) }ms`;
 
 	needsRender = true;
 
