@@ -10,12 +10,6 @@ export function generateIntersectionEdges( bvhA, bvhB, matrixBToA, target = [] )
 	bvhA.bvhcast( bvhB, matrixBToA, {
 		intersectsTriangles: ( tri1, tri2 ) => {
 
-			if ( tri1.equals( tri2 ) ) {
-
-				return;
-
-			}
-
 			if ( tri1.needsUpdate ) {
 
 				tri1.update();
