@@ -14,6 +14,8 @@ import {
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { LDrawLoader } from 'three/examples/jsm/loaders/LDrawLoader.js';
+import { LDrawConditionalLineMaterial } from 'three/examples/jsm/materials/LDrawConditionalLineMaterial.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { ProjectionGenerator } from '..';
 import { MeshBVH, SAH } from 'three-mesh-bvh';
@@ -83,12 +85,52 @@ async function init() {
 	group = new Group();
 	scene.add( group );
 
-	const gltf = await new GLTFLoader()
-		.setMeshoptDecoder( MeshoptDecoder )
-		.loadAsync( 'https://raw.githubusercontent.com/gkjohnson/3d-demo-data/main/models/nasa-m2020/Perseverance.glb' );
-		// .loadAsync( new URL( './simple.glb', import.meta.url ).toString() );
-	model = gltf.scene;
+	if ( window.location.hash === '#lego' ) {
 
+		const loader = new LDrawLoader();
+
+		loader.setConditionalLineMaterial( LDrawConditionalLineMaterial )
+		await loader.preloadMaterials( 'https://raw.githubusercontent.com/gkjohnson/ldraw-parts-library/master/colors/ldcfgalt.ldr' );
+		const result = await loader
+			.setPartsLibraryPath( 'https://raw.githubusercontent.com/gkjohnson/ldraw-parts-library/master/complete/ldraw/' )
+			.loadAsync( 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/ldraw/officialLibrary/models/1621-1-LunarMPVVehicle.mpd_Packed.mpd' );
+
+		model = result;
+		model.scale.setScalar( 0.01 );
+		model.rotation.x = Math.PI;
+
+		const toRemove = [];
+		model.traverse( c => {
+
+			if ( c.isLine ) {
+
+				toRemove.push( c );
+
+			}
+
+			if ( c.isMesh ) {
+
+				meshes.push( c );
+
+			}
+
+		} );
+
+		toRemove.forEach( c => {
+
+			c.removeFromParent();
+
+		} );
+
+	} else {
+
+		const gltf = await new GLTFLoader()
+			.setMeshoptDecoder( MeshoptDecoder )
+			.loadAsync( 'https://raw.githubusercontent.com/gkjohnson/3d-demo-data/main/models/nasa-m2020/Perseverance.glb' );
+			// .loadAsync( new URL( './simple.glb', import.meta.url ).toString() );
+		model = gltf.scene;
+
+	}
 	model.traverse( c => {
 
 		if ( c.material ) {
