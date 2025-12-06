@@ -4,6 +4,7 @@ import {
 	Line3,
 	Ray,
 	BufferAttribute,
+	Matrix4,
 } from 'three';
 import { MeshBVH } from 'three-mesh-bvh';
 import {
@@ -123,8 +124,8 @@ export class ProjectionGenerator {
 		let edges = generateEdges( geometry, UP_VECTOR, angleThreshold );
 		if ( includeIntersectionEdges ) {
 
-			const results = yield* generateIntersectionEdges( bvh, iterationTime );
-			edges = edges.concat( results );
+			generateIntersectionEdges( bvh, bvh, new Matrix4(), edges );
+			yield;
 
 		}
 
