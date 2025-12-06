@@ -1,93 +1,53 @@
 import { Line3 } from 'three';
-import { ExtendedTriangle } from 'three-mesh-bvh';
 import { isLineTriangleEdge } from './triangleLineUtils.js';
 
+// TODO: How can we add support for "iterationTime"?
+
 const OFFSET_EPSILON = 1e-6;
-const _tri = new ExtendedTriangle();
 const _line = new Line3();
-export function* generateIntersectionEdges( bvh, iterationTime = 30 ) {
+export function generateIntersectionEdges( bvhA, bvhB, matrixBToA, target = [] ) {
 
-	const edges = [];
-	const geometry = bvh.geometry;
-	const index = geometry.index;
-	const posAttr = geometry.attributes.position;
-	const vertCount = index ? index.count : posAttr;
+	bvhA.bvhcast( bvhB, matrixBToA, {
+		intersectsTriangles: ( tri1, tri2 ) => {
 
-	let time = performance.now();
-	for ( let i = 0; i < vertCount; i += 3 ) {
+			if ( tri1.needsUpdate ) {
 
-		let i0 = i + 0;
-		let i1 = i + 1;
-		let i2 = i + 2;
-		if ( index ) {
+				tri1.update();
 
-			i0 = index.getX( i0 );
-			i1 = index.getX( i1 );
-			i2 = index.getX( i2 );
+			}
 
-		}
+			if ( tri2.needsUpdate ) {
 
-		const { a, b, c } = _tri;
-		a.fromBufferAttribute( posAttr, i0 );
-		b.fromBufferAttribute( posAttr, i1 );
-		c.fromBufferAttribute( posAttr, i2 );
-		_tri.needsUpdate = true;
-		_tri.update();
+				tri2.update();
 
-		bvh.shapecast( {
+			}
 
-			intersectsBounds: box => {
+			if ( Math.abs( tri1.plane.normal.dot( tri2.plane.normal ) ) > 1 - 1e-6 ) {
 
-				return box.intersectsTriangle( _tri );
+				return false;
 
-			},
+			}
 
-			intersectsTriangle: tri2 => {
+			// TODO: Is this correct? Should we just ignore lines if the edge is on the edge
+			// of _both_ triangles?
+			// TODO: Consider checking if the triangles are connected at the edges first as
+			// an optimization?
+			if (
+				tri1.intersectsTriangle( tri2, _line, true ) &&
+				! isLineTriangleEdge( tri1, _line ) &&
+				! isLineTriangleEdge( tri2, _line )
+			) {
 
-				if ( _tri.equals( tri2 ) ) {
+				_line.start.y += OFFSET_EPSILON;
+				_line.end.y += OFFSET_EPSILON;
+				target.push( _line.clone() );
 
-					return false;
-
-				}
-
-				if ( tri2.needsUpdate ) {
-
-					tri2.update();
-
-				}
-
-				if ( Math.abs( _tri.plane.normal.dot( tri2.plane.normal ) ) > 1 - 1e-6 ) {
-
-					return false;
-
-				}
-
-				if (
-					_tri.intersectsTriangle( tri2, _line, true ) &&
-					! isLineTriangleEdge( _tri, _line ) &&
-					! isLineTriangleEdge( tri2, _line )
-				) {
-
-					_line.start.y += OFFSET_EPSILON;
-					_line.end.y += OFFSET_EPSILON;
-					edges.push( _line.clone() );
-
-				}
-
-			},
-
-		} );
-
-		const delta = performance.now() - time;
-		if ( delta > iterationTime ) {
-
-			yield;
-			time = performance.now();
+			}
 
 		}
 
-	}
+	} );
 
-	return edges;
+	return target;
 
 }
