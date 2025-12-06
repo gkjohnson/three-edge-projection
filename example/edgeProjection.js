@@ -9,7 +9,6 @@ import {
 	LineSegments,
 	LineBasicMaterial,
 	PerspectiveCamera,
-	MeshStandardMaterial,
 } from 'three';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
