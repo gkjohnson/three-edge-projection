@@ -2,6 +2,8 @@ import { Plane, Vector3 } from 'three';
 import { isYProjectedTriangleDegenerate } from './triangleLineUtils.js';
 
 const EPSILON = 1e-16;
+const UP_VECTOR = /* @__PURE__ */ new Vector3( 0, 1, 0 );
+const _plane = /* @__PURE__ */ new Plane();
 const _planeHit = /* @__PURE__ */ new Vector3();
 const _lineDirection = /* @__PURE__ */ new Vector3();
 export function trimToBeneathTriPlane( tri, line, lineTarget ) {
@@ -14,9 +16,16 @@ export function trimToBeneathTriPlane( tri, line, lineTarget ) {
 	}
 
 	// if the plane is not facing up then flip the direction
-	const plane = tri.plane;
-	const startDist = plane.distanceToPoint( line.start );
-	const endDist = plane.distanceToPoint( line.end );
+	_plane.copy( tri.plane );
+	if ( _plane.normal.dot( UP_VECTOR ) < 0 ) {
+
+		_plane.normal.multiplyScalar( - 1 );
+		_plane.constant *= - 1;
+
+	}
+
+	const startDist = _plane.distanceToPoint( line.start );
+	const endDist = _plane.distanceToPoint( line.end );
 	const isStartOnPlane = Math.abs( startDist ) < EPSILON;
 	const isEndOnPlane = Math.abs( endDist ) < EPSILON;
 	const isStartBelow = startDist < 0;
@@ -24,7 +33,7 @@ export function trimToBeneathTriPlane( tri, line, lineTarget ) {
 
 	// if the line and plane are coplanar then return that we can't trim
 	line.delta( _lineDirection ).normalize();
-	if ( Math.abs( plane.normal.dot( _lineDirection ) ) < EPSILON ) {
+	if ( Math.abs( _plane.normal.dot( _lineDirection ) ) < EPSILON ) {
 
 		if ( isStartOnPlane || ! isStartBelow ) {
 
@@ -54,7 +63,7 @@ export function trimToBeneathTriPlane( tri, line, lineTarget ) {
 
 	} else {
 
-		let didHit = plane.intersectLine( line, _planeHit );
+		let didHit = _plane.intersectLine( line, _planeHit );
 		if ( ! didHit ) {
 
 			if ( isStartOnPlane ) {
