@@ -89,7 +89,7 @@ async function init() {
 
 		// init loader
 		const loader = new LDrawLoader();
-		loader.setConditionalLineMaterial( LDrawConditionalLineMaterial )
+		loader.setConditionalLineMaterial( LDrawConditionalLineMaterial );
 		await loader.preloadMaterials( 'https://raw.githubusercontent.com/gkjohnson/ldraw-parts-library/master/colors/ldcfgalt.ldr' );
 
 		// load model
