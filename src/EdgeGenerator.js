@@ -2,6 +2,7 @@ import { Vector3, Matrix4 } from 'three';
 import { MeshBVH } from 'three-mesh-bvh';
 import { generateEdges } from './utils/generateEdges.js';
 import { generateIntersectionEdges } from './utils/generateIntersectionEdges.js';
+import { getAllMeshes } from './utils/getAllMeshes.js';
 
 const _BtoA = /* @__PURE__ */ new Matrix4();
 const _toLocalMatrix = /* @__PURE__ */ new Matrix4();
@@ -202,23 +203,6 @@ export class EdgeGenerator {
 		}
 
 	}
-
-}
-
-function getAllMeshes( scene ) {
-
-	let meshes = [];
-	scene.traverse( c => {
-
-		if ( c.geometry ) {
-
-			meshes.push( c );
-
-		}
-
-	} );
-
-	return meshes;
 
 }
 

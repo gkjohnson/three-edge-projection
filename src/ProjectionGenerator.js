@@ -10,6 +10,7 @@ import { overlapsToLines } from './utils/overlapUtils.js';
 import { EdgeGenerator } from './EdgeGenerator.js';
 import { edgesToGeometry } from './utils/edgesToGeometry.js';
 import { bvhcastEdges } from './utils/bvhcastEdges.js';
+import { getAllMeshes } from './utils/getAllMeshes.js';
 
 // these shared variables are not used across "yield" boundaries in the
 // generator so there's no risk of overwriting another tasks data
@@ -42,18 +43,7 @@ class ProjectedEdgeCollector {
 
 	constructor( scene ) {
 
-		const meshes = [];
-		scene.traverse( c => {
-
-			if ( c.geometry ) {
-
-				meshes.push( c );
-
-			}
-
-		} );
-
-		this.meshes = meshes;
+		this.meshes = getAllMeshes( scene );
 		this.bvhs = new Map();
 		this.visibleEdges = [];
 		this.hiddenEdges = [];
