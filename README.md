@@ -95,11 +95,14 @@ Whether to generate edges representing the intersections between triangles.
 
 ```js
 *generate(
-	geometry : MeshBVH | BufferGeometry,
-	options : {
-		onProgress: ( percent : Number ) => void,
+	geometry: MeshBVH | BufferGeometry,
+	options: {
+		onProgress: ( message: string ) => void,
 	}
-) : BufferGeometry
+): {
+	getVisibleLineGeometry(): BufferGeometry,
+	getHiddenLineGeometry(): BufferGeometry,
+}
 ```
 
 Generate the edge geometry using a generator function.
@@ -110,10 +113,13 @@ Generate the edge geometry using a generator function.
 generateAsync(
 	geometry : MeshBVH | BufferGeometry,
 	options : {
-		onProgress: ( percent : Number ) => void,
+		onProgress: ( message: string ) => void,
 		signal: AbortSignal,
 	}
-) : Promise<BufferGeometry>
+): Promise<{
+	getVisibleLineGeometry(): BufferGeometry,
+	getHiddenLineGeometry(): BufferGeometry,
+}>
 ```
 
 Generate the geometry with a promise-style API.
