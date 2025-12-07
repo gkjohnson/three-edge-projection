@@ -8,13 +8,6 @@ const _planeHit = /* @__PURE__ */ new Vector3();
 const _lineDirection = /* @__PURE__ */ new Vector3();
 export function trimToBeneathTriPlane( tri, line, lineTarget ) {
 
-	// if the triangle is insignificant then skip it
-	if ( isYProjectedTriangleDegenerate( tri ) ) {
-
-		return false;
-
-	}
-
 	// update triangle if needed
 	if ( tri.needsUpdate ) {
 

@@ -192,7 +192,7 @@ function* updateProjection() {
 
 			outputContainer.innerText = `processing: ${ parseFloat( ( p * 100 ).toFixed( 2 ) ) }%`;
 			outlines.geometry.dispose();
-			outlines.geometry = data.getLineGeometry();
+			outlines.geometry = data.getVisibleLineGeometry();
 			outlines.visible = true;
 
 		},
