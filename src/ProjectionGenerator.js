@@ -71,12 +71,6 @@ class ProjectedEdgeCollector {
 
 	}
 
-	getLineGeometry() {
-
-		return toLineGeometry( this.visibleEdges );
-
-	}
-
 	addEdges( ...args ) {
 
 		const currIterationTime = this.iterationTime;
