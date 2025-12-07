@@ -5,8 +5,6 @@ import {
 	DirectionalLight,
 	AmbientLight,
 	Group,
-	MeshStandardMaterial,
-	MeshBasicMaterial,
 	BufferGeometry,
 	LineSegments,
 	LineBasicMaterial,
@@ -15,19 +13,16 @@ import {
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { LDrawLoader } from 'three/examples/jsm/loaders/LDrawLoader.js';
+import { LDrawConditionalLineMaterial } from 'three/examples/jsm/materials/LDrawConditionalLineMaterial.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { ProjectionGenerator } from '..';
-import { ProjectionGeneratorWorker } from '../src/worker/ProjectionGeneratorWorker.js';
-import { generateEdges } from '../src/utils/generateEdges.js';
+import { MeshBVH, SAH } from 'three-mesh-bvh';
 
 const params = {
-	displayModel: 'color',
-	displayEdges: false,
-	displayProjection: true,
-	sortEdges: true,
+	displayModel: true,
+	displayDrawThroughProjection: false,
 	includeIntersectionEdges: true,
-	useWorker: false,
 	rotate: () => {
 
 		group.quaternion.random();
@@ -38,6 +33,11 @@ const params = {
 		box.setFromObject( model, true );
 		box.getCenter( group.position ).multiplyScalar( - 1 );
 		group.position.y = Math.max( 0, - box.min.y ) + 1;
+		group.updateMatrixWorld( true );
+
+		needsRender = true;
+
+		task = updateEdges();
 
 	},
 	regenerate: () => {
@@ -48,10 +48,10 @@ const params = {
 };
 
 const ANGLE_THRESHOLD = 50;
+let needsRender = false;
 let renderer, camera, scene, gui, controls;
-let lines, model, projection, group, shadedWhiteModel, whiteModel;
+let model, projection, drawThroughProjection, group;
 let outputContainer;
-let worker;
 let task = null;
 
 init();
@@ -84,106 +84,100 @@ async function init() {
 	group = new Group();
 	scene.add( group );
 
-	const gltf = await new GLTFLoader()
-		.setMeshoptDecoder( MeshoptDecoder )
-		.loadAsync( 'https://raw.githubusercontent.com/gkjohnson/3d-demo-data/main/models/nasa-m2020/Perseverance.glb' );
-	model = gltf.scene;
+	if ( window.location.hash === '#lego' ) {
 
-	const whiteMaterial = new MeshStandardMaterial( {
-		polygonOffset: true,
-		polygonOffsetFactor: 1,
-		polygonOffsetUnits: 1,
-	} );
-	shadedWhiteModel = model.clone();
-	shadedWhiteModel.traverse( c => {
+		// init loader
+		const loader = new LDrawLoader();
+		loader.setConditionalLineMaterial( LDrawConditionalLineMaterial );
+		await loader.preloadMaterials( 'https://raw.githubusercontent.com/gkjohnson/ldraw-parts-library/master/colors/ldcfgalt.ldr' );
 
-		if ( c.material ) {
+		// load model
+		model = await loader
+			.setPartsLibraryPath( 'https://raw.githubusercontent.com/gkjohnson/ldraw-parts-library/master/complete/ldraw/' )
+			.loadAsync( 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/ldraw/officialLibrary/models/1621-1-LunarMPVVehicle.mpd_Packed.mpd' );
 
-			c.material = whiteMaterial;
+		// adjust model transforms
+		model.scale.setScalar( 0.01 );
+		model.rotation.x = Math.PI;
+
+		// remove lines
+		const toRemove = [];
+		model.traverse( c => {
+
+			if ( c.isLine ) {
+
+				toRemove.push( c );
+
+			}
+
+		} );
+
+		toRemove.forEach( c => {
+
+			c.removeFromParent();
+
+		} );
+
+	} else {
+
+		const gltf = await new GLTFLoader()
+			.setMeshoptDecoder( MeshoptDecoder )
+			.loadAsync( 'https://raw.githubusercontent.com/gkjohnson/3d-demo-data/main/models/nasa-m2020/Perseverance.glb' );
+		model = gltf.scene;
+
+	}
+
+	// initialize BVHs
+	model.traverse( c => {
+
+		if ( c.geometry && ! c.geometry.boundsTree ) {
+
+			c.geometry.clearGroups();
+			c.geometry.boundsTree = new MeshBVH( c.geometry, { maxLeafTris: 1, strategy: SAH } );
 
 		}
 
 	} );
-
-	const whiteBasicMaterial = new MeshBasicMaterial( {
-		polygonOffset: true,
-		polygonOffsetFactor: 1,
-		polygonOffsetUnits: 1,
-	} );
-	whiteModel = model.clone();
-	whiteModel.traverse( c => {
-
-		if ( c.material ) {
-
-			c.material = whiteBasicMaterial;
-
-		}
-
-	} );
-
-	group.updateMatrixWorld( true );
 
 	// center model
 	const box = new Box3();
 	box.setFromObject( model, true );
 	box.getCenter( group.position ).multiplyScalar( - 1 );
 	group.position.y = Math.max( 0, - box.min.y ) + 1;
-	group.add( model, shadedWhiteModel, whiteModel );
-
-	// generate geometry line segments
-	lines = new Group();
-	model.traverse( c => {
-
-		if ( c.geometry ) {
-
-			const edges = generateEdges( c.geometry, undefined, ANGLE_THRESHOLD );
-			const points = edges.flatMap( line => [ line.start, line.end ] );
-			const geom = new BufferGeometry();
-			geom.setFromPoints( points );
-
-			const geomLines = new LineSegments( geom, new LineBasicMaterial( { color: 0x030303 } ) );
-			geomLines.position.copy( c.position );
-			geomLines.quaternion.copy( c.quaternion );
-			geomLines.scale.copy( c.scale );
-			lines.add( geomLines );
-
-		}
-
-	} );
-	group.add( lines );
+	group.add( model );
+	group.updateMatrixWorld( true );
 
 	// create projection display mesh
-	projection = new LineSegments( new BufferGeometry(), new LineBasicMaterial( { color: 0x030303 } ) );
-	scene.add( projection );
+	projection = new LineSegments( new BufferGeometry(), new LineBasicMaterial( { color: 0x030303, depthWrite: false } ) );
+	drawThroughProjection = new LineSegments( new BufferGeometry(), new LineBasicMaterial( { color: 0xcacaca, depthWrite: false } ) );
+	drawThroughProjection.renderOrder = - 1;
+	scene.add( projection, drawThroughProjection );
 
 	// camera setup
-	camera = new PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.01, 50 );
-	camera.position.setScalar( 3.5 );
+	camera = new PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.01, 1e3 );
+	camera.position.setScalar( 3.5 );//.multiplyScalar( 10 );
 	camera.updateProjectionMatrix();
+
+	needsRender = true;
 
 	// controls
 	controls = new OrbitControls( camera, renderer.domElement );
+	controls.addEventListener( 'change', () => {
+
+		needsRender = true;
+
+	} );
 
 	gui = new GUI();
-	gui.add( params, 'displayModel', [
-		'none',
-		'color',
-		'shaded white',
-		// 'white',
-	] );
-	// gui.add( params, 'displayEdges' );
-	gui.add( params, 'displayProjection' );
-	gui.add( params, 'sortEdges' );
-	gui.add( params, 'includeIntersectionEdges' );
-	gui.add( params, 'useWorker' );
+	gui.add( params, 'displayModel' ).onChange( () => needsRender = true );
+	gui.add( params, 'displayDrawThroughProjection' ).onChange( () => needsRender = true );
+	gui.add( params, 'includeIntersectionEdges' ).onChange( () => needsRender = true );
 	gui.add( params, 'rotate' );
-	gui.add( params, 'regenerate' );
-
-	worker = new ProjectionGeneratorWorker();
-
-	task = updateEdges();
+	gui.add( params, 'regenerate' ).onChange( () => needsRender = true );
 
 	render();
+
+	task = updateEdges();
 
 	window.addEventListener( 'resize', function () {
 
@@ -192,124 +186,53 @@ async function init() {
 
 		renderer.setSize( window.innerWidth, window.innerHeight );
 
+		needsRender = true;
+
 	}, false );
 
 }
 
 function* updateEdges( runTime = 30 ) {
 
-	outputContainer.innerText = 'processing: --';
+	outputContainer.innerText = 'Generating...';
+	projection.geometry.dispose();
+	projection.geometry = new BufferGeometry();
 
-	// transform and merge geometries to project into a single model
-	let timeStart = window.performance.now();
-	const geometries = [];
-	model.updateWorldMatrix( true, true );
-	model.traverse( c => {
+	const timeStart = window.performance.now();
+	const generator = new ProjectionGenerator();
+	generator.iterationTime = runTime;
+	generator.angleThreshold = ANGLE_THRESHOLD;
+	generator.includeIntersectionEdges = params.includeIntersectionEdges;
 
-		if ( c.geometry ) {
+	const collection = yield* generator.generate( model, {
+		onProgress: ( msg, tot, edges ) => {
 
-			const clone = c.geometry.clone();
-			clone.applyMatrix4( c.matrixWorld );
-			for ( const key in clone.attributes ) {
+			outputContainer.innerText = msg;
+			if ( tot ) outputContainer.innerText += ' ' + ( 100 * tot ).toFixed( 1 ) + '%';
 
-				if ( key !== 'position' ) {
+			if ( edges ) {
 
-					clone.deleteAttribute( key );
-
-				}
+				projection.geometry.dispose();
+				projection.geometry = edges.getVisibleLineGeometry();
+				needsRender = true;
 
 			}
 
-			geometries.push( clone );
-
-		}
-
+		},
 	} );
-	const mergedGeometry = mergeGeometries( geometries, false );
-	const mergeTime = window.performance.now() - timeStart;
+	drawThroughProjection.geometry.dispose();
+	drawThroughProjection.geometry = collection.getHiddenLineGeometry();
 
-	yield;
-
-	if ( params.includeIntersectionEdges ) {
-
-		outputContainer.innerText = 'processing: finding edge intersections...';
-		projection.geometry.dispose();
-		projection.geometry = new BufferGeometry();
-
-	}
-
-	// generate the candidate edges
-	timeStart = window.performance.now();
-
-	let geometry = null;
-	if ( ! params.useWorker ) {
-
-		const generator = new ProjectionGenerator();
-		generator.sortEdges = params.sortEdges;
-		generator.iterationTime = runTime;
-		generator.angleThreshold = ANGLE_THRESHOLD;
-		generator.includeIntersectionEdges = params.includeIntersectionEdges;
-
-		const task = generator.generate( mergedGeometry, {
-
-			onProgress: ( p, data ) => {
-
-				outputContainer.innerText = `processing: ${ parseFloat( ( p * 100 ).toFixed( 2 ) ) }%`;
-				if ( params.displayProjection ) {
-
-					projection.geometry.dispose();
-					projection.geometry = data.getLineGeometry();
-
-				}
-
-
-			},
-
-		} );
-
-		let result = task.next();
-		while ( ! result.done ) {
-
-			result = task.next();
-			yield;
-
-		}
-
-		geometry = result.value;
-
-	} else {
-
-		worker
-			.generate( mergedGeometry, {
-				sortEdges: params.sortEdges,
-				includeIntersectionEdges: params.includeIntersectionEdges,
-				onProgress: p => {
-
-					outputContainer.innerText = `processing: ${ parseFloat( ( p * 100 ).toFixed( 2 ) ) }%`;
-
-				},
-			} )
-			.then( result => {
-
-				geometry = result;
-
-			} );
-
-		while ( geometry === null ) {
-
-			yield;
-
-		}
-
-	}
-
+	projection.geometry.dispose();
+	projection.geometry = collection.getVisibleLineGeometry();
+	const geometry = projection.geometry;
 	const trimTime = window.performance.now() - timeStart;
 
 	projection.geometry.dispose();
 	projection.geometry = geometry;
-	outputContainer.innerText =
-		`merge geometry  : ${ mergeTime.toFixed( 2 ) }ms\n` +
-		`edge trimming   : ${ trimTime.toFixed( 2 ) }ms`;
+	outputContainer.innerText = `Generation time: ${ trimTime.toFixed( 2 ) }ms`;
+
+	needsRender = true;
 
 }
 
@@ -329,12 +252,14 @@ function render() {
 
 	}
 
-	model.visible = params.displayModel === 'color';
-	shadedWhiteModel.visible = params.displayModel === 'shaded white';
-	whiteModel.visible = params.displayModel === 'white';
-	lines.visible = params.displayEdges;
-	projection.visible = params.displayProjection;
+	model.visible = params.displayModel;
+	drawThroughProjection.visible = params.displayDrawThroughProjection;
 
-	renderer.render( scene, camera );
+	if ( needsRender ) {
+
+		renderer.render( scene, camera );
+		needsRender = false;
+
+	}
 
 }
