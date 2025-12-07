@@ -12,15 +12,15 @@ Edge projection based on [three-mesh-bvh](https://github.com/gkjohnson/three-mes
 
 # Examples
 
-[Rover edge projection](https://gkjohnson.github.io/three-edge-projection/example/bundle/edgeProjection.html)
+[Rover edge projection](https://gkjohnson.github.io/three-edge-projection/example/dist/edgeProjection.html)
 
-[Lego edge projection](https://gkjohnson.github.io/three-edge-projection/example/bundle/edgeProjection.html#lego)
+[Lego edge projection](https://gkjohnson.github.io/three-edge-projection/example/dist/edgeProjection.html#lego)
 
-[Silhouette projection](https://gkjohnson.github.io/three-edge-projection/example/bundle/silhouetteProjection.html)
+[Silhouette projection](https://gkjohnson.github.io/three-edge-projection/example/dist/silhouetteProjection.html)
 
-[Floor plan projection](https://gkjohnson.github.io/three-edge-projection/example/bundle/floorProjection.html)
+[Floor plan projection](https://gkjohnson.github.io/three-edge-projection/example/dist/floorProjection.html)
 
-[Planar intersection](https://gkjohnson.github.io/three-edge-projection/example/bundle/planarIntersection.html)
+[Planar intersection](https://gkjohnson.github.io/three-edge-projection/example/dist/planarIntersection.html)
 
 # Use
 
