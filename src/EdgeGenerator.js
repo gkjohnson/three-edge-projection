@@ -68,13 +68,11 @@ export class EdgeGenerator {
 
 				}
 
-				// const results = yield* generateEdges( mesh.geometry, [], {
-				// 	projectionDirection: localProjection,
-				// 	thresholdAngle: thresholdAngle,
-				// 	iterationTime: iterationTime,
-				// } );
-
-				const results = generateEdges( mesh.geometry, localProjection, thresholdAngle );
+				const results = yield* generateEdges( mesh.geometry, [], {
+					projectionDirection: localProjection,
+					thresholdAngle: thresholdAngle,
+					iterationTime: iterationTime,
+				} );
 
 				transformEdges( results, mesh.matrixWorld );
 
@@ -91,14 +89,11 @@ export class EdgeGenerator {
 
 		} else {
 
-			return generateEdges( geometry, projectionDirection, thresholdAngle );
-
-
-			// return yield* generateEdges( geometry, resultEdges, {
-			// 	projectionDirection: projectionDirection,
-			// 	thresholdAngle: thresholdAngle,
-			// 	iterationTime: iterationTime,
-			// } );
+			return yield* generateEdges( geometry, resultEdges, {
+				projectionDirection: projectionDirection,
+				thresholdAngle: thresholdAngle,
+				iterationTime: iterationTime,
+			} );
 
 		}
 
@@ -211,11 +206,15 @@ export class EdgeGenerator {
 
 }
 
-function transformEdges( list, matrix ) {
+// add an offset to avoid precision errors when detecting intersections and clipping
+function transformEdges( list, matrix, offset = 1e-6 ) {
 
 	for ( let i = 0; i < list.length; i ++ ) {
 
-		list[ i ].applyMatrix4( matrix );
+		const line = list[ i ];
+		line.applyMatrix4( matrix );
+		line.start.y += offset;
+		line.end.y += offset;
 
 	}
 
