@@ -12,7 +12,9 @@ Edge projection based on [three-mesh-bvh](https://github.com/gkjohnson/three-mes
 
 # Examples
 
-[Geometry edge projection](https://gkjohnson.github.io/three-edge-projection/example/bundle/edgeProjection.html)
+[Rover edge projection](https://gkjohnson.github.io/three-edge-projection/example/bundle/edgeProjection.html)
+
+[Lego edge projection](https://gkjohnson.github.io/three-edge-projection/example/bundle/edgeProjection.html#lego)
 
 [Silhouette projection](https://gkjohnson.github.io/three-edge-projection/example/bundle/silhouetteProjection.html)
 
