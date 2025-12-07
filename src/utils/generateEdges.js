@@ -8,9 +8,13 @@ const _v1 = /* @__PURE__ */ new Vector3();
 const _normal = /* @__PURE__ */ new Vector3();
 const _triangle = /* @__PURE__ */ new Triangle();
 
-export function generateEdges( geometry, projectionDir = UP_VECTOR, thresholdAngle = 1 ) {
+export function* generateEdges( geometry, target = [], options = {} ) {
 
-	const edges = [];
+	const {
+		projectionDirection = UP_VECTOR,
+		thresholdAngle = 1,
+		iterationTime = 30,
+	} = options;
 
 	const precisionPoints = 4;
 	const precision = Math.pow( 10, precisionPoints );
@@ -25,7 +29,15 @@ export function generateEdges( geometry, projectionDir = UP_VECTOR, thresholdAng
 	const hashes = new Array( 3 );
 
 	const edgeData = {};
+	let time = performance.now();
 	for ( let i = 0; i < indexCount; i += 3 ) {
+
+		if ( performance.now() - time > iterationTime ) {
+
+			yield;
+			time = performance.now();
+
+		}
 
 		if ( indexAttr ) {
 
@@ -81,19 +93,25 @@ export function generateEdges( geometry, projectionDir = UP_VECTOR, thresholdAng
 
 				// get the dot product relative to the projection angle and
 				// add an epsilon for nearly vertical triangles
-				let normDot = projectionDir.dot( _normal );
-				normDot = Math.abs( normDot ) < EPSILON ? 0 : normDot;
+				let projectionThreshold = false;
+				if ( projectionDirection !== null ) {
 
-				let otherDot = projectionDir.dot( otherNormal );
-				otherDot = Math.abs( otherDot ) < EPSILON ? 0 : otherDot;
+					let normDot = projectionDirection.dot( _normal );
+					normDot = Math.abs( normDot ) < EPSILON ? 0 : normDot;
 
-				const projectionThreshold = Math.sign( normDot ) !== Math.sign( otherDot );
+					let otherDot = projectionDirection.dot( otherNormal );
+					otherDot = Math.abs( otherDot ) < EPSILON ? 0 : otherDot;
+
+					projectionThreshold = Math.sign( normDot ) !== Math.sign( otherDot );
+
+				}
+
 				if ( meetsThreshold || projectionThreshold ) {
 
 					const line = new Line3();
 					line.start.copy( v0 );
 					line.end.copy( v1 );
-					edges.push( line );
+					target.push( line );
 
 				}
 
@@ -128,12 +146,12 @@ export function generateEdges( geometry, projectionDir = UP_VECTOR, thresholdAng
 			const line = new Line3();
 			line.start.copy( _v0 );
 			line.end.copy( _v1 );
-			edges.push( line );
+			target.push( line );
 
 		}
 
 	}
 
-	return edges;
+	return target;
 
 }

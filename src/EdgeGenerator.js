@@ -68,13 +68,11 @@ export class EdgeGenerator {
 
 				}
 
-				// const results = yield* generateEdges( mesh.geometry, [], {
-				// 	projectionDirection: localProjection,
-				// 	thresholdAngle: thresholdAngle,
-				// 	iterationTime: iterationTime,
-				// } );
-
-				const results = generateEdges( mesh.geometry, localProjection, thresholdAngle );
+				const results = yield* generateEdges( mesh.geometry, [], {
+					projectionDirection: localProjection,
+					thresholdAngle: thresholdAngle,
+					iterationTime: iterationTime,
+				} );
 
 				transformEdges( results, mesh.matrixWorld );
 
@@ -91,14 +89,11 @@ export class EdgeGenerator {
 
 		} else {
 
-			return generateEdges( geometry, projectionDirection, thresholdAngle );
-
-
-			// return yield* generateEdges( geometry, resultEdges, {
-			// 	projectionDirection: projectionDirection,
-			// 	thresholdAngle: thresholdAngle,
-			// 	iterationTime: iterationTime,
-			// } );
+			return yield* generateEdges( geometry, resultEdges, {
+				projectionDirection: projectionDirection,
+				thresholdAngle: thresholdAngle,
+				iterationTime: iterationTime,
+			} );
 
 		}
 
