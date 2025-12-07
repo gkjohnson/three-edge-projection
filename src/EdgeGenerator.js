@@ -207,7 +207,7 @@ export class EdgeGenerator {
 }
 
 // add an offset to avoid precision errors when detecting intersections and clipping
-function transformEdges( list, matrix, offset = 1e-10 ) {
+function transformEdges( list, matrix, offset = 1e-6 ) {
 
 	for ( let i = 0; i < list.length; i ++ ) {
 
