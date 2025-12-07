@@ -3,7 +3,6 @@ import { isLineTriangleEdge } from './triangleLineUtils.js';
 
 // TODO: How can we add support for "iterationTime"?
 
-const OFFSET_EPSILON = 1e-6;
 const _line = new Line3();
 export function generateIntersectionEdges( bvhA, bvhB, matrixBToA, target = [] ) {
 
@@ -38,8 +37,6 @@ export function generateIntersectionEdges( bvhA, bvhB, matrixBToA, target = [] )
 				! isLineTriangleEdge( tri2, _line )
 			) {
 
-				_line.start.y += OFFSET_EPSILON;
-				_line.end.y += OFFSET_EPSILON;
 				target.push( _line.clone() );
 
 			}
