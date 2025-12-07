@@ -91,7 +91,6 @@ export class EdgeGenerator {
 
 		} else {
 
-			console.log( thresholdAngle )
 			return generateEdges( geometry, projectionDirection, thresholdAngle );
 
 
