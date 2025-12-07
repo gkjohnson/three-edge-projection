@@ -95,7 +95,7 @@ Whether to generate edges representing the intersections between triangles.
 
 ```js
 *generate(
-	geometry: MeshBVH | BufferGeometry,
+	geometry: Object3D | BufferGeometry,
 	options: {
 		onProgress: ( message: string ) => void,
 	}
@@ -111,8 +111,8 @@ Generate the edge geometry using a generator function.
 
 ```js
 generateAsync(
-	geometry : MeshBVH | BufferGeometry,
-	options : {
+	geometry: Object3D | BufferGeometry,
+	options: {
 		onProgress: ( message: string ) => void,
 		signal: AbortSignal,
 	}
