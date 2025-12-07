@@ -254,13 +254,13 @@ function* updateEdges( runTime = 30 ) {
 
 			onProgress: ( p, data ) => {
 
-				outputContainer.innerText = `processing: ${ parseFloat( ( p * 100 ).toFixed( 2 ) ) }%`;
-				if ( params.displayProjection ) {
+				// outputContainer.innerText = `processing: ${ parseFloat( ( p * 100 ).toFixed( 2 ) ) }%`;
+				// if ( params.displayProjection ) {
 
-					projection.geometry.dispose();
-					projection.geometry = data.getLineGeometry();
+				// 	projection.geometry.dispose();
+				// 	projection.geometry = data.getLineGeometry();
 
-				}
+				// }
 
 
 			},
@@ -275,7 +275,7 @@ function* updateEdges( runTime = 30 ) {
 
 		}
 
-		geometry = result.value;
+		geometry = result.value.getLineGeometry();
 
 	} else {
 

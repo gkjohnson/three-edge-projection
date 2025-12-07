@@ -2,44 +2,23 @@ import { Line3 } from 'three';
 
 const _line = /* @__PURE__ */ new Line3();
 
-// compresses the given edge overlaps into a minimal set of representative objects
-export function compressEdgeOverlaps( overlaps ) {
-
-	overlaps.sort( ( a, b ) => {
-
-		return a[ 0 ] - b[ 0 ];
-
-	} );
-
-	for ( let i = 1; i < overlaps.length; i ++ ) {
-
-		const overlap = overlaps[ i ];
-		const prevOverlap = overlaps[ i - 1 ];
-		if ( prevOverlap[ 1 ] >= overlap[ 0 ] ) {
-
-			prevOverlap[ 1 ] = Math.max( prevOverlap[ 1 ], overlap[ 1 ] );
-			overlaps.splice( i, 1 );
-			i --;
-
-		}
-
-	}
-
-}
-
-
 // Converts the given array of overlaps into line segments
-export function overlapsToLines( line, overlaps, target = [] ) {
+export function overlapsToLines( line, overlaps, invert = false, target = [] ) {
 
-	compressEdgeOverlaps( overlaps );
-
-	const invOverlaps = [[ 0, 1 ]];
+	// Function assumes the line overlaps are already compressed
+	let invOverlaps = [[ 0, 1 ]];
 	for ( let i = 0, l = overlaps.length; i < l; i ++ ) {
 
 		const invOverlap = invOverlaps[ i ];
 		const overlap = overlaps[ i ];
 		invOverlap[ 1 ] = overlap[ 0 ];
-		invOverlaps.push( new Float32Array( [ overlap[ 1 ], 1 ] ) );
+		invOverlaps.push( [ overlap[ 1 ], 1 ] );
+
+	}
+
+	if ( invert ) {
+
+		[ overlaps, invOverlaps ] = [ invOverlaps, overlaps ];
 
 	}
 
