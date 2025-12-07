@@ -18,6 +18,7 @@ import { trimToBeneathTriPlane } from './utils/trimToBeneathTriPlane.js';
 import { getProjectedLineOverlap } from './utils/getProjectedLineOverlap.js';
 import { appendOverlapRange } from './utils/getProjectedOverlaps.js';
 import { generateIntersectionEdges } from './utils/generateIntersectionEdges.js';
+import { EdgeGenerator } from './EdgeGenerator.js';
 
 // these shared variables are not used across "yield" boundaries in the
 // generator so there's no risk of overwriting another tasks data
@@ -121,11 +122,15 @@ export class ProjectionGenerator {
 
 		// find the set of edges of intersecting triangles
 		const geometry = bvh.geometry;
-		let edges = generateEdges( geometry, UP_VECTOR, angleThreshold );
+		const generator = new EdgeGenerator();
+		generator.iterationTime = iterationTime;
+		generator.thresholdAngle = angleThreshold;
+
+		const edges = yield* generator.getEdgesGenerator( geometry );
+
 		if ( includeIntersectionEdges ) {
 
-			generateIntersectionEdges( bvh, bvh, new Matrix4(), edges );
-			yield;
+			yield* generator.getIntersectionEdgesGenerator( geometry, edges );
 
 		}
 
