@@ -39,7 +39,7 @@ while ( ! result.done ) {
 
 }
 
-const lines = new LineSegments( result.value, material );
+const lines = new LineSegments( result.value.getVisibleLineGeometry(), material );
 scene.add( lines );
 ```
 
@@ -49,8 +49,8 @@ Simpler API with less control over when the work happens.
 
 ```js
 const generator = new ProjectionGenerator();
-const geometry = await generator.generateAsync( geometry );
-const mesh = new Mesh( result.value, material );
+const result = await generator.generateAsync( geometry );
+const mesh = new Mesh( result.getVisibleLineGeometry(), material );
 scene.add( mesh );
 ```
 
