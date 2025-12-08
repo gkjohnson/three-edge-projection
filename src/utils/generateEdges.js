@@ -1,7 +1,7 @@
 import { Vector3, Triangle, Line3, MathUtils } from 'three';
 
 // Modified version of js EdgesGeometry logic to handle silhouette edges
-const EPSILON = 1e-16;
+const EPSILON = 1e-10;
 const UP_VECTOR = /* @__PURE__ */ new Vector3( 0, 1, 0 );
 const _v0 = /* @__PURE__ */ new Vector3();
 const _v1 = /* @__PURE__ */ new Vector3();

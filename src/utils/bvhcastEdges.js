@@ -22,6 +22,7 @@ export function bvhcastEdges( edgesBvh, edges, bvh, mesh, hiddenOverlapMap ) {
 	const edgeGeometry = edgesBvh.geometry;
 	const { geometry, matrixWorld, material } = mesh;
 	const side = material.side;
+	const inverted = matrixWorld.determinant() < 0;
 
 	edgesBvh.bvhcast( bvh, matrixWorld, {
 
@@ -51,7 +52,7 @@ export function bvhcastEdges( edgesBvh, edges, bvh, mesh, hiddenOverlapMap ) {
 				// back face culling
 				if ( side !== DoubleSide ) {
 
-					const faceUp = _tri.plane.normal.dot( UP_VECTOR ) > 0;
+					const faceUp = _tri.plane.normal.dot( UP_VECTOR ) !== inverted;
 					if ( faceUp === ( side === BackSide ) ) {
 
 						continue;

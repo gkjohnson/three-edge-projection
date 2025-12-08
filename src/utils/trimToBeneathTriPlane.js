@@ -1,4 +1,4 @@
-import { Plane, Vector3 } from 'three';
+import { Plane, Vector3, MathUtils, PlaneHelper } from 'three';
 import { isYProjectedTriangleDegenerate } from './triangleLineUtils.js';
 
 const EPSILON = 1e-16;
@@ -35,7 +35,8 @@ export function trimToBeneathTriPlane( tri, line, lineTarget ) {
 	line.delta( _lineDirection ).normalize();
 	if ( Math.abs( _plane.normal.dot( _lineDirection ) ) < EPSILON ) {
 
-		if ( isStartOnPlane || ! isStartBelow ) {
+		// if the line is definitely above or on the plane then skip it
+		if ( ( isStartOnPlane || ! isStartBelow ) && ( isEndOnPlane || ! isEndBelow ) ) {
 
 			return false;
 
@@ -63,40 +64,20 @@ export function trimToBeneathTriPlane( tri, line, lineTarget ) {
 
 	} else {
 
-		let didHit = _plane.intersectLine( line, _planeHit );
-		if ( ! didHit ) {
+		const t = MathUtils.mapLinear( 0, startDist, endDist, 0, 1 );
+		line.at( t, _planeHit );
 
-			if ( isStartOnPlane ) {
+		if ( isStartBelow ) {
 
-				_planeHit.copy( line.start );
-				didHit = true;
+			lineTarget.start.copy( line.start );
+			lineTarget.end.copy( _planeHit );
+			return true;
 
-			}
+		} else if ( isEndBelow ) {
 
-			if ( isEndOnPlane ) {
-
-				_planeHit.copy( line.end );
-				didHit = true;
-
-			}
-
-		}
-
-		if ( didHit ) {
-
-			if ( isStartBelow ) {
-
-				lineTarget.start.copy( line.start );
-				lineTarget.end.copy( _planeHit );
-				return true;
-
-			} else if ( isEndBelow ) {
-
-				lineTarget.end.copy( line.end );
-				lineTarget.start.copy( _planeHit );
-				return true;
-
-			}
+			lineTarget.end.copy( line.end );
+			lineTarget.start.copy( _planeHit );
+			return true;
 
 		}
 
