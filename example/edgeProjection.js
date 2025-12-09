@@ -134,7 +134,17 @@ async function init() {
 
 		if ( c.geometry && ! c.geometry.boundsTree ) {
 
-			c.geometry.clearGroups();
+			const elCount = c.geometry.index ? c.geometry.index.count : c.geometry.attributes.position.count;
+			c.geometry.groups.forEach( group => {
+
+				if ( group.count === Infinity ) {
+
+					group.count = elCount - group.start;
+
+				}
+
+			} );
+
 			c.geometry.boundsTree = new MeshBVH( c.geometry, { maxLeafTris: 1, strategy: SAH } );
 
 		}
