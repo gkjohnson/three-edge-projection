@@ -6,6 +6,7 @@ export default {
 	root: './example/',
 	base: '',
 	build: {
+		sourcemap: true,
 		outDir: './dist/',
 		rollupOptions: {
 			input: fs

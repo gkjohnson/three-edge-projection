@@ -84,6 +84,8 @@ async function init() {
 	group = new Group();
 	scene.add( group );
 
+	window.ROOT = group;
+
 	if ( window.location.hash === '#lego' ) {
 
 		// init loader
