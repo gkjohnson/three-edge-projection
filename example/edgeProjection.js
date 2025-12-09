@@ -197,8 +197,14 @@ async function init() {
 function* updateEdges( runTime = 30 ) {
 
 	outputContainer.innerText = 'Generating...';
+
+	// dispose the geometry
 	projection.geometry.dispose();
+	drawThroughProjection.geometry.dispose();
+
+	// initialize an empty geometry
 	projection.geometry = new BufferGeometry();
+	drawThroughProjection.geometry = new BufferGeometry();
 
 	const timeStart = window.performance.now();
 	const generator = new ProjectionGenerator();
