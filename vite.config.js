@@ -8,6 +8,11 @@ export default {
 	build: {
 		sourcemap: true,
 		outDir: './dist/',
+		minify: false,
+		terserOptions: {
+			compress: false,
+			mangle: false,
+		},
 		rollupOptions: {
 			input: fs
 				.readdirSync( './example/' )
