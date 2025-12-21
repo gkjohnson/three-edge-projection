@@ -1,6 +1,6 @@
 import { Plane, Vector3, MathUtils } from 'three';
 
-const EPSILON = 1e-16;
+const EPSILON = 1e-10;
 const UP_VECTOR = /* @__PURE__ */ new Vector3( 0, 1, 0 );
 const _plane = /* @__PURE__ */ new Plane();
 const _planeHit = /* @__PURE__ */ new Vector3();
