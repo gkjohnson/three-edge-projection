@@ -35,6 +35,18 @@
             padding: 5px 0;
         }
     </style>
+    <!-- Import map to test with CDN versions - comment out to use bundled versions -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.178.0/build/three.module.js",
+            "three/": "https://cdn.jsdelivr.net/npm/three@0.178.0/",
+            "three-mesh-bvh": "https://cdn.jsdelivr.net/npm/three-mesh-bvh@0.9.1/build/index.module.js",
+            "clipper2-js": "https://cdn.jsdelivr.net/npm/clipper2-js@0.9.0/+esm",
+            "three-edge-projection": "../src/index.js"
+        }
+    }
+    </script>
 </head>
 <body>
 	<div id="info">
