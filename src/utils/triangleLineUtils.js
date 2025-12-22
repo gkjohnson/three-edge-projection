@@ -1,6 +1,6 @@
 import { Vector3 } from 'three';
 
-const EPSILON = 1e-10;
+const EPSILON = 1e-16;
 const UP_VECTOR = /* @__PURE__ */ new Vector3( 0, 1, 0 );
 const _dir = new Vector3();
 

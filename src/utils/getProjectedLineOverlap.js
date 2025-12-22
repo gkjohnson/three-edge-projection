@@ -1,8 +1,8 @@
 import { Vector3, Line3, Plane } from 'three';
 import { ExtendedTriangle } from 'three-mesh-bvh';
 
-const AREA_EPSILON = 1e-10;
-const DIST_EPSILON = 1e-10;
+const AREA_EPSILON = 1e-16;
+const DIST_EPSILON = 1e-16;
 const _orthoPlane = /* @__PURE__ */ new Plane();
 const _edgeLine = /* @__PURE__ */ new Line3();
 const _point = /* @__PURE__ */ new Vector3();

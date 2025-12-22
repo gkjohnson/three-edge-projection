@@ -1,5 +1,5 @@
 import { Vector3 } from 'three';
-const DIST_EPSILON = 1e-10;
+const DIST_EPSILON = 1e-16;
 const _dir = /* @__PURE__ */ new Vector3();
 const _v0 = /* @__PURE__ */ new Vector3();
 const _v1 = /* @__PURE__ */ new Vector3();
