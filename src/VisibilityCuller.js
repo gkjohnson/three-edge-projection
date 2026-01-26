@@ -46,10 +46,13 @@ export class VisibilityCuller {
 		objects = collectAllObjects( objects );
 
 		const { renderer, pixelsPerMeter } = this;
-		const vec = new Vector3();
+		const size = new Vector3();
 		const camera = new OrthographicCamera();
 		const box = new Box3();
 		const idMesh = new Mesh( undefined, new IDMaterial() );
+		idMesh.matrixAutoUpdate = false;
+		idMesh.matrixWorldAutoUpdate = false;
+
 		const target = new WebGLRenderTarget( 1, 1, {
 			type: IntType,
 			format: RGBAIntegerFormat,
@@ -64,19 +67,24 @@ export class VisibilityCuller {
 
 		} );
 
-		// set the target size
-		box.getSize( vec );
-		target.setSize( Math.ceil( vec.x / pixelsPerMeter ), Math.ceil( vec.y / pixelsPerMeter ) );
+		// get the bounds dimensions
+		box.getSize( size );
+
+		// calculate the tile and target size
+		const maxTextureSize = Math.min( renderer.capabilities.maxTextureSize, 2 ** 13 );
+		const pixelWidth = Math.ceil( size.x / pixelsPerMeter );
+		const pixelHeight = Math.ceil( size.z / pixelsPerMeter );
+		const tilesX = Math.ceil( pixelWidth / maxTextureSize );
+		const tilesY = Math.ceil( pixelHeight / maxTextureSize );
+
+		console.log( tilesX, tilesY );
+
+		target.setSize( Math.ceil( pixelWidth / tilesX ), Math.ceil( pixelHeight / tilesY ) );
 
 		// set the camera bounds
 		camera.rotation.x = - Math.PI / 2;
-		camera.left = box.min.x;
-		camera.right = box.max.x;
-		camera.top = box.max.z;
-		camera.bottom = box.min.z;
 		camera.far = box.max.y - box.min.y;
 		camera.position.y = box.max.y;
-		camera.updateProjectionMatrix();
 
 		// save render state
 		const color = renderer.getClearColor( new Color() );
@@ -88,24 +96,59 @@ export class VisibilityCuller {
 		renderer.autoClear = false;
 		renderer.setClearColor( new Color( - 1, - 1, - 1 ), - 1 );
 		renderer.setRenderTarget( target );
-		renderer.clear();
 
-		// TODO: we should be able to use a RED uint target here
-		for ( let i = 0; i < objects.length; i ++ ) {
+		console.log( target.width, target.height )
+		const readBuffer = new Int32Array( target.width * target.height * 4 );
+		const visibleSet = new Set();
+		const stepX = size.x / tilesX;
+		const stepY = size.z / tilesY;
+		for ( let x = 0; x < tilesX; x ++ ) {
 
-			const object = objects[ i ];
-			idMesh.matrixAutoUpdate = false;
-			idMesh.matrixWorldAutoUpdate = false;
-			idMesh.matrixWorld.copy( object.matrixWorld );
-			idMesh.geometry = object.geometry;
+			for ( let y = 0; y < tilesY; y ++ ) {
 
-			idMesh.material.objectId = i;
-			renderer.render( idMesh, camera );
+				camera.left = box.min.x + stepX * x;
+				camera.bottom = box.min.z + stepY * y;
+
+				camera.right = camera.left + stepX;
+				camera.top = camera.bottom + stepY;
+
+				camera.updateProjectionMatrix();
+				renderer.clear();
+
+				// TODO: we should be able to use a RED uint target here
+				for ( let i = 0; i < objects.length; i ++ ) {
+
+					const object = objects[ i ];
+					idMesh.matrixWorld.copy( object.matrixWorld );
+					idMesh.geometry = object.geometry;
+
+					idMesh.material.objectId = i;
+					renderer.render( idMesh, camera );
+
+				}
+
+				// TODO: using promise.all here to wait for them to finish at the same time seems to be slower?
+				await renderer
+					.readRenderTargetPixelsAsync( target, 0, 0, target.width, target.height, readBuffer )
+					.then( buffer => {
+
+						// find all visible objects
+						for ( let i = 0, l = buffer.length; i < l; i += 4 ) {
+
+							const id = buffer[ i ];
+							if ( id !== - 1 ) {
+
+								visibleSet.add( objects[ id ] );
+
+							}
+
+						}
+
+					} );
+
+			}
 
 		}
-
-		const readBuffer = new Int32Array( target.width * target.height * 4 );
-		await renderer.readRenderTargetPixelsAsync( target, 0, 0, target.width, target.height, readBuffer );
 
 		// reset render state
 		renderer.setClearColor( color, alpha );
@@ -116,19 +159,8 @@ export class VisibilityCuller {
 		idMesh.material.dispose();
 		target.dispose();
 
-		// find all visible objects
-		const visibleSet = new Set();
-		for ( let i = 0, l = readBuffer.length; i < l; i ++ ) {
 
-			const id = readBuffer[ i ];
-			if ( id !== - 1 ) {
-
-				visibleSet.add( objects[ id ] );
-
-			}
-
-		}
-
+		console.log( objects.length, visibleSet.size );
 		return Array.from( visibleSet );
 
 	}
@@ -161,11 +193,8 @@ class IDMaterial extends ShaderMaterial {
 			},
 
 			vertexShader: /* glsl */`
-				uniform int objectId;
-				flat varying int vid;
 				void main() {
 
-					vid = objectId;
 					gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 
 				}
@@ -173,11 +202,11 @@ class IDMaterial extends ShaderMaterial {
 
 			fragmentShader: /* glsl */`
 				layout(location = 0) out ivec4 out_id;
-				flat varying int vid;
+				uniform int objectId;
 
 				void main() {
 
-					out_id = ivec4( vid );
+					out_id = ivec4( objectId );
 
 				}
 			`,
