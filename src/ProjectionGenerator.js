@@ -8,7 +8,7 @@ import { MeshBVH, SAH } from 'three-mesh-bvh';
 import { isYProjectedLineDegenerate } from './utils/triangleLineUtils.js';
 import { overlapsToLines } from './utils/overlapUtils.js';
 import { EdgeGenerator } from './EdgeGenerator.js';
-import { edgesToGeometry } from './utils/edgesToGeometry.js';
+import { LineObjectsBVH } from './utils/edgesToGeometry.js';
 import { bvhcastEdges } from './utils/bvhcastEdges.js';
 import { getAllMeshes } from './utils/getAllMeshes.js';
 
@@ -117,7 +117,7 @@ class ProjectedEdgeCollector {
 		}
 
 		// construct bvh
-		const edgesBvh = new MeshBVH( edgesToGeometry( edges ), { maxLeafSize: 2, strategy: SAH } );
+		const edgesBvh = new LineObjectsBVH( edges, { maxLeafSize: 2, strategy: SAH } );
 		time = performance.now();
 		for ( let m = 0; m < meshes.length; m ++ ) {
 
@@ -136,7 +136,7 @@ class ProjectedEdgeCollector {
 
 			// use bvhcast to compare all edges against all meshes
 			const mesh = meshes[ m ];
-			bvhcastEdges( edgesBvh, edges, bvhs.get( mesh.geometry ), mesh, hiddenOverlapMap );
+			bvhcastEdges( edgesBvh, bvhs.get( mesh.geometry ), mesh, hiddenOverlapMap );
 
 		}
 

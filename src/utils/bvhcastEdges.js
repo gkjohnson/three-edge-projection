@@ -17,12 +17,12 @@ _tri.update = () => {
 
 };
 
-export function bvhcastEdges( edgesBvh, edges, bvh, mesh, hiddenOverlapMap ) {
+export function bvhcastEdges( edgesBvh, bvh, mesh, hiddenOverlapMap ) {
 
-	const edgeGeometry = edgesBvh.geometry;
 	const { geometry, matrixWorld, material } = mesh;
 	const side = material.side;
 	const inverted = matrixWorld.determinant() < 0;
+	const edges = edgesBvh.lines;
 
 	edgesBvh.bvhcast( bvh, matrixWorld, {
 
@@ -65,8 +65,7 @@ export function bvhcastEdges( edgesBvh, edges, bvh, mesh, hiddenOverlapMap ) {
 				const lowestTriangleY = Math.min( a.y, b.y, c.y );
 				for ( let e = edgeOffset, le = edgeCount + edgeOffset; e < le; e ++ ) {
 
-					const edgeIndex = edgeGeometry.index.getX( e * 3 ) / 3;
-					const _line = edges[ edgeIndex ];
+					const _line = edges[ e ];
 
 					// Calculate edge and triangle bounds
 					const lowestLineY = Math.min( _line.start.y, _line.end.y );
@@ -107,7 +106,7 @@ export function bvhcastEdges( edgesBvh, edges, bvh, mesh, hiddenOverlapMap ) {
 					// Calculate projected overlap and store in hiddenOverlapMap
 					if ( getProjectedLineOverlap( _beneathLine, _tri, _overlapLine ) ) {
 
-						appendOverlapRange( _line, _overlapLine, hiddenOverlapMap[ edgeIndex ] );
+						appendOverlapRange( _line, _overlapLine, hiddenOverlapMap[ e ] );
 
 					}
 
