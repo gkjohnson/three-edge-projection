@@ -15,7 +15,7 @@ export class LineObjectsBVH extends BVH {
 		this.primitiveBufferStride = 1;
 
 		this.heightOffset = options.heightOffset ?? 1e3;
-		this.init();
+		this.init( options );
 
 	}
 

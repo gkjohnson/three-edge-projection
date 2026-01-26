@@ -8,7 +8,7 @@ import { MeshBVH, SAH } from 'three-mesh-bvh';
 import { isYProjectedLineDegenerate } from './utils/triangleLineUtils.js';
 import { overlapsToLines } from './utils/overlapUtils.js';
 import { EdgeGenerator } from './EdgeGenerator.js';
-import { LineObjectsBVH } from './utils/edgesToGeometry.js';
+import { LineObjectsBVH } from './utils/LineObjectsBVH.js';
 import { bvhcastEdges } from './utils/bvhcastEdges.js';
 import { getAllMeshes } from './utils/getAllMeshes.js';
 
