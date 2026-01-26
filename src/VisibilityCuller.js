@@ -4,11 +4,11 @@ import {
 	WebGLRenderTarget,
 	Box3,
 	IntType,
-	RGBAIntegerFormat,
 	Vector3,
 	OrthographicCamera,
 	Color,
 	Mesh,
+	RedIntegerFormat,
 } from 'three';
 
 function collectAllObjects( objects ) {
@@ -54,9 +54,10 @@ export class VisibilityCuller {
 		idMesh.matrixWorldAutoUpdate = false;
 
 		const target = new WebGLRenderTarget( 1, 1, {
+			// TODO: using "read back" for non-RGBA textures may cause issues
 			type: IntType,
-			format: RGBAIntegerFormat,
-			internalFormat: 'RGBA32I',
+			format: RedIntegerFormat,
+			internalFormat: 'R32I',
 		} );
 
 		// get the bounds of the image
@@ -77,8 +78,6 @@ export class VisibilityCuller {
 		const tilesX = Math.ceil( pixelWidth / maxTextureSize );
 		const tilesY = Math.ceil( pixelHeight / maxTextureSize );
 
-		console.log( tilesX, tilesY );
-
 		target.setSize( Math.ceil( pixelWidth / tilesX ), Math.ceil( pixelHeight / tilesY ) );
 
 		// set the camera bounds
@@ -97,8 +96,7 @@ export class VisibilityCuller {
 		renderer.setClearColor( new Color( - 1, - 1, - 1 ), - 1 );
 		renderer.setRenderTarget( target );
 
-		console.log( target.width, target.height )
-		const readBuffer = new Int32Array( target.width * target.height * 4 );
+		const readBuffer = new Int32Array( target.width * target.height );
 		const visibleSet = new Set();
 		const stepX = size.x / tilesX;
 		const stepY = size.z / tilesY;
@@ -133,7 +131,7 @@ export class VisibilityCuller {
 					.then( buffer => {
 
 						// find all visible objects
-						for ( let i = 0, l = buffer.length; i < l; i += 4 ) {
+						for ( let i = 0, l = buffer.length; i < l; i ++ ) {
 
 							const id = buffer[ i ];
 							if ( id !== - 1 ) {
