@@ -3,6 +3,7 @@ import {
 	Vector3,
 	BufferAttribute,
 	Mesh,
+	Scene,
 } from 'three';
 import { MeshBVH, SAH } from 'three-mesh-bvh';
 import { isYProjectedLineDegenerate } from './utils/triangleLineUtils.js';
@@ -11,6 +12,7 @@ import { EdgeGenerator } from './EdgeGenerator.js';
 import { LineObjectsBVH } from './utils/LineObjectsBVH.js';
 import { bvhcastEdges } from './utils/bvhcastEdges.js';
 import { getAllMeshes } from './utils/getAllMeshes.js';
+import { VisibilityCuller } from './VisibilityCuller.js';
 
 // these shared variables are not used across "yield" boundaries in the
 // generator so there's no risk of overwriting another tasks data
@@ -210,11 +212,34 @@ export class ProjectionGenerator {
 	*generate( scene, options ) {
 
 		const { iterationTime, angleThreshold, includeIntersectionEdges } = this;
-		const { onProgress = () => {} } = options;
+		const {
+			onProgress = () => {},
+			visibilityCuller = null,
+		} = options;
 
 		if ( scene.isBufferGeometry ) {
 
 			scene = new Mesh( scene );
+
+		}
+
+		if ( visibilityCuller ) {
+
+			let finished = false;
+			visibilityCuller.cull( scene ).then( res => {
+
+				// TODO: the functions should be able to handle an array of objects
+				scene = new Scene();
+				scene.children = res;
+				finished = true;
+
+			} );
+
+			while ( ! finished ) {
+
+				yield;
+
+			}
 
 		}
 
