@@ -92,7 +92,7 @@ async function init() {
 
 	} );
 	const mergedGeometry = mergeGeometries( geometries, false );
-	bvh = new MeshBVH( mergedGeometry, { maxLeafTris: 1 } );
+	bvh = new MeshBVH( mergedGeometry, { maxLeafSize: 1 } );
 
 	// center model
 	const box = new Box3();

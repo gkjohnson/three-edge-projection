@@ -117,7 +117,7 @@ class ProjectedEdgeCollector {
 		}
 
 		// construct bvh
-		const edgesBvh = new MeshBVH( edgesToGeometry( edges ), { maxLeafTris: 2, strategy: SAH } );
+		const edgesBvh = new MeshBVH( edgesToGeometry( edges ), { maxLeafSize: 2, strategy: SAH } );
 		time = performance.now();
 		for ( let m = 0; m < meshes.length; m ++ ) {
 

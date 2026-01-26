@@ -18,7 +18,7 @@ export class PlanarIntersectionGenerator {
 		const { plane } = this;
 		if ( bvh instanceof BufferGeometry ) {
 
-			bvh = new MeshBVH( bvh, { maxLeafTris: 1 } );
+			bvh = new MeshBVH( bvh, { maxLeafSize: 1 } );
 
 		}
 
