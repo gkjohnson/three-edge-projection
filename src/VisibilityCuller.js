@@ -3,13 +3,30 @@ import {
 	GLSL3,
 	WebGLRenderTarget,
 	Box3,
-	IntType,
 	Vector3,
+	Vector4,
 	OrthographicCamera,
 	Color,
 	Mesh,
-	RedIntegerFormat,
+	NoBlending,
 } from 'three';
+
+// RGBA8 ID encoding - supports up to 16,777,215 objects (2^24 - 1)
+// ID 0 is valid, background is indicated by alpha = 0
+function encodeId( id, target ) {
+
+	target.x = ( id & 0xFF ) / 255;
+	target.y = ( ( id >> 8 ) & 0xFF ) / 255;
+	target.z = ( ( id >> 16 ) & 0xFF ) / 255;
+	target.w = 1;
+
+}
+
+function decodeId( buffer, index ) {
+
+	return buffer[ index ] | ( buffer[ index + 1 ] << 8 ) | ( buffer[ index + 2 ] << 16 );
+
+}
 
 function collectAllObjects( objects ) {
 
@@ -53,12 +70,7 @@ export class VisibilityCuller {
 		idMesh.matrixAutoUpdate = false;
 		idMesh.matrixWorldAutoUpdate = false;
 
-		const target = new WebGLRenderTarget( 1, 1, {
-			// TODO: using "read back" for non-RGBA textures may cause issues
-			type: IntType,
-			format: RedIntegerFormat,
-			internalFormat: 'R32I',
-		} );
+		const target = new WebGLRenderTarget( 1, 1 );
 
 		// get the bounds of the image
 		box.makeEmpty();
@@ -93,10 +105,10 @@ export class VisibilityCuller {
 
 		// render ids
 		renderer.autoClear = false;
-		renderer.setClearColor( new Color( - 1, - 1, - 1 ), - 1 );
+		renderer.setClearColor( 0, 0 );
 		renderer.setRenderTarget( target );
 
-		const readBuffer = new Int32Array( target.width * target.height );
+		const readBuffer = new Uint8Array( target.width * target.height * 4 );
 		const visibleSet = new Set();
 		const stepX = size.x / tilesX;
 		const stepY = size.z / tilesY;
@@ -113,7 +125,6 @@ export class VisibilityCuller {
 				camera.updateProjectionMatrix();
 				renderer.clear();
 
-				// TODO: we should be able to use a RED uint target here
 				for ( let i = 0; i < objects.length; i ++ ) {
 
 					const object = objects[ i ];
@@ -125,20 +136,18 @@ export class VisibilityCuller {
 
 				}
 
-				// TODO: using promise.all here to wait for them to finish at the same time seems to be slower?
 				await renderer
 					.readRenderTargetPixelsAsync( target, 0, 0, target.width, target.height, readBuffer )
 					.then( buffer => {
 
-						// find all visible objects
-						for ( let i = 0, l = buffer.length; i < l; i ++ ) {
+						// find all visible objects - decode RGBA to ID
+						for ( let i = 0, l = buffer.length; i < l; i += 4 ) {
 
-							const id = buffer[ i ];
-							if ( id !== - 1 ) {
+							// alpha = 0 indicates background (no object)
+							if ( buffer[ i + 3 ] === 0 ) continue;
 
-								visibleSet.add( objects[ id ] );
-
-							}
+							const id = decodeId( buffer, i );
+							visibleSet.add( objects[ id ] );
 
 						}
 
@@ -168,15 +177,9 @@ export class VisibilityCuller {
 
 class IDMaterial extends ShaderMaterial {
 
-	get objectId() {
-
-		return this.uniforms.objectId.value;
-
-	}
-
 	set objectId( v ) {
 
-		this.uniforms.objectId.value = v;
+		encodeId( v, this.uniforms.objectId.value );
 
 	}
 
@@ -185,9 +188,10 @@ class IDMaterial extends ShaderMaterial {
 		super( {
 
 			glslVersion: GLSL3,
+			blending: NoBlending,
 
 			uniforms: {
-				objectId: { value: 0 },
+				objectId: { value: new Vector4() },
 			},
 
 			vertexShader: /* glsl */`
@@ -199,12 +203,12 @@ class IDMaterial extends ShaderMaterial {
 			`,
 
 			fragmentShader: /* glsl */`
-				layout(location = 0) out ivec4 out_id;
-				uniform int objectId;
+				layout(location = 0) out vec4 out_id;
+				uniform vec4 objectId;
 
 				void main() {
 
-					out_id = ivec4( objectId );
+					out_id = objectId;
 
 				}
 			`,
