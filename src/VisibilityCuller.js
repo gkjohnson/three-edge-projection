@@ -136,22 +136,18 @@ export class VisibilityCuller {
 
 				}
 
-				await renderer
-					.readRenderTargetPixelsAsync( target, 0, 0, target.width, target.height, readBuffer )
-					.then( buffer => {
+				const buffer = await renderer.readRenderTargetPixelsAsync( target, 0, 0, target.width, target.height, readBuffer );
 
-						// find all visible objects - decode RGBA to ID
-						for ( let i = 0, l = buffer.length; i < l; i += 4 ) {
+				// find all visible objects - decode RGBA to ID
+				for ( let i = 0, l = buffer.length; i < l; i += 4 ) {
 
-							// alpha = 0 indicates background (no object)
-							if ( buffer[ i + 3 ] === 0 ) continue;
+					// alpha = 0 indicates background (no object)
+					if ( buffer[ i + 3 ] === 0 ) continue;
 
-							const id = decodeId( buffer, i );
-							visibleSet.add( objects[ id ] );
+					const id = decodeId( buffer, i );
+					visibleSet.add( objects[ id ] );
 
-						}
-
-					} );
+				}
 
 			}
 
