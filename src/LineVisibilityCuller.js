@@ -94,8 +94,6 @@ function collectAllMeshes( objects ) {
 
 function isLineVisibleInTile( line, depthBuffer, tile ) {
 
-	// TODO: ensure samples are being done at the center of the pixels
-	// TODO: use a Line3 intermediary to "step" along the line rather than separate variables
 	// TODO: clamp the lines to the tile bounds initially to avoid unnecessary iterations
 
 	const { start, end } = line;
@@ -132,18 +130,19 @@ function isLineVisibleInTile( line, depthBuffer, tile ) {
 	const dy = y1 - y0;
 	const steps = Math.ceil( Math.max( Math.abs( dx ), Math.abs( dy ) ) );
 
-	const xStep = steps > 0 ? dx / steps : 0;
-	const yStep = steps > 0 ? dy / steps : 0;
-	const depthStep = steps > 0 ? ( end.y - start.y ) / steps : 0;
+	// calculate the max height increase per pixel step to account for the line
+	// potentially being higher elsewhere within the pixel than where we sample
+	const heightPerStep = steps > 0 ? Math.abs( end.y - start.y ) / steps : 0;
 
-	let px = x0;
-	let pz = y0;
-	let py = start.y;
+	const point = new Vector3();
 
 	for ( let s = 0; s <= steps; s ++ ) {
 
-		const pixelX = Math.floor( px );
-		const pixelY = pixelHeight - Math.floor( pz );
+		const t = steps > 0 ? s / steps : 0;
+		point.lerpVectors( start, end, t );
+
+		const pixelX = Math.floor( ( point.x - minX ) * worldToPixelX );
+		const pixelY = ( pixelHeight - 1 ) - Math.floor( ( point.z - minY ) * worldToPixelY );
 
 		// check if pixel is within this tile
 		if ( pixelX >= 0 && pixelX < pixelWidth && pixelY >= 0 && pixelY < pixelHeight ) {
@@ -151,18 +150,14 @@ function isLineVisibleInTile( line, depthBuffer, tile ) {
 			const index = pixelY * pixelWidth + pixelX;
 			const depth = depthBuffer[ index ];
 
-			// point is visible if it's at or above the surface (with epsilon tolerance)
-			if ( py >= depth ) {
+			// point is visible if the highest point of the line within this pixel is at or above the surface
+			if ( point.y + heightPerStep >= depth ) {
 
 				return true;
 
 			}
 
 		}
-
-		px += xStep;
-		pz += yStep;
-		py += depthStep;
 
 	}
 
@@ -211,6 +206,9 @@ export class LineVisibilityCuller {
 			box.expandByObject( o );
 
 		} );
+
+		// add margin to avoid boundary issues (one pixel on each side)
+		box.expandByScalar( pixelsPerMeter );
 
 		// get the bounds dimensions
 		box.getSize( size );
@@ -322,7 +320,7 @@ export class LineVisibilityCuller {
 					const line = lines[ i ];
 					if ( ! visibleSet.has( line ) ) {
 
-						const isVisible = isLineVisibleInTile( line, contractedBuffer, tile, depthEpsilon );
+						const isVisible = isLineVisibleInTile( line, contractedBuffer, tile );
 						if ( isVisible ) {
 
 							visibleSet.add( line );
