@@ -44,37 +44,6 @@ function decodeDepthBuffer( rgbaBuffer, depthBuffer, near, far, offset ) {
 
 }
 
-function contractDepthBuffer( width, height, depthBuffer, target ) {
-
-	for ( let x = 0; x < width; x ++ ) {
-
-		for ( let y = 0; y < height; y ++ ) {
-
-			let z = Infinity;
-			for ( let dx = - 1; dx <= 1; dx ++ ) {
-
-				for ( let dy = - 1; dy <= 1; dy ++ ) {
-
-					if ( x + dx < 0 || x + dx >= width ) continue;
-					if ( y + dy < 0 || y + dy >= height ) continue;
-
-					const i = ( x + dx ) + ( y + dy ) * width;
-					const dz = depthBuffer[ i ];
-
-					if ( dz < z ) z = dz;
-
-				}
-
-			}
-
-			target[ x + y * width ] = z;
-
-		}
-
-	}
-
-}
-
 function collectAllMeshes( objects ) {
 
 	const result = new Set();
@@ -243,7 +212,6 @@ export class LineVisibilityCuller {
 
 		const readBuffer = new Uint8Array( tileWidth * tileHeight * 4 );
 		const depthBuffer = new Float32Array( tileWidth * tileHeight );
-		const contractedBuffer = new Float32Array( tileWidth * tileHeight );
 		const stepX = size.x / tilesX;
 		const stepZ = size.z / tilesY;
 
@@ -276,40 +244,16 @@ export class LineVisibilityCuller {
 				// read back the depth buffer and decode it to world Y values
 				// gl_FragCoord.z=0 is near plane (box.max.y), z=1 is far plane (box.min.y)
 				await renderer.readRenderTargetPixelsAsync( target, 0, 0, tileWidth, tileHeight, readBuffer );
-
 				decodeDepthBuffer( readBuffer, depthBuffer, box.max.y, box.min.y, - depthEpsilon );
-				contractDepthBuffer( target.width, target.height, depthBuffer, contractedBuffer );
 
-				// window.POINTS = new Points();
-				// const points = Array.from( depthBuffer ).map( ( v, i ) => {
-
-				// 	const px = i % target.width;
-				// 	const py = Math.floor( i / target.width );
-
-				// 	const x = MathUtils.mapLinear( px, 0, target.width, box.min.x, box.max.x ) + 1 / target.width;
-				// 	const y = MathUtils.mapLinear( py, target.height, 0, box.min.z, box.max.z );
-
-				// 	if ( v !== - Infinity ) {
-
-				// 	} else {
-
-				// 		return null;
-
-				// 	}
-
-				// 	return new Vector3( x, v, y );
-
-				// } ).filter( v => v !== null );
-
-				// POINTS.geometry.setFromPoints( points );
-
+				// TODO: add a contraction step on the GPU to help prevent culling lines unnecessarily
 
 				// tile info for visibility checks
 				const tile = {
 					minX: camera.left,
 					maxX: camera.right,
-					minY: camera.bottom,
-					maxY: camera.top,
+					minY: - camera.top,
+					maxY: - camera.bottom,
 					pixelWidth: target.width,
 					pixelHeight: target.height,
 				};
@@ -320,7 +264,7 @@ export class LineVisibilityCuller {
 					const line = lines[ i ];
 					if ( ! visibleSet.has( line ) ) {
 
-						const isVisible = isLineVisibleInTile( line, contractedBuffer, tile );
+						const isVisible = isLineVisibleInTile( line, depthBuffer, tile );
 						if ( isVisible ) {
 
 							visibleSet.add( line );
