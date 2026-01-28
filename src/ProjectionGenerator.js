@@ -12,8 +12,6 @@ import { EdgeGenerator } from './EdgeGenerator.js';
 import { LineObjectsBVH } from './utils/LineObjectsBVH.js';
 import { bvhcastEdges } from './utils/bvhcastEdges.js';
 import { getAllMeshes } from './utils/getAllMeshes.js';
-import { VisibilityCuller } from './VisibilityCuller.js';
-import { LineVisibilityCuller } from './LineVisibilityCuller.js';
 
 // these shared variables are not used across "yield" boundaries in the
 // generator so there's no risk of overwriting another tasks data
