@@ -13,6 +13,7 @@ import { LineObjectsBVH } from './utils/LineObjectsBVH.js';
 import { bvhcastEdges } from './utils/bvhcastEdges.js';
 import { getAllMeshes } from './utils/getAllMeshes.js';
 import { VisibilityCuller } from './VisibilityCuller.js';
+import { LineVisibilityCuller } from './LineVisibilityCuller.js';
 
 // these shared variables are not used across "yield" boundaries in the
 // generator so there's no risk of overwriting another tasks data
@@ -215,6 +216,7 @@ export class ProjectionGenerator {
 		const {
 			onProgress = () => {},
 			visibilityCuller = null,
+			lineVisibilityCuller = null,
 		} = options;
 
 		if ( scene.isBufferGeometry ) {
@@ -263,6 +265,27 @@ export class ProjectionGenerator {
 		edges = edges.filter( e => ! isYProjectedLineDegenerate( e ) );
 
 		yield;
+
+		// cull non-visible lines using depth map
+		if ( lineVisibilityCuller ) {
+
+			onProgress( 'Culling non-visible lines' );
+
+			let finished = false;
+			lineVisibilityCuller.cull( scene, edges ).then( res => {
+
+				edges = res;
+				finished = true;
+
+			} );
+
+			while ( ! finished ) {
+
+				yield;
+
+			}
+
+		}
 
 		const collector = new ProjectedEdgeCollector( scene );
 		collector.iterationTime = iterationTime;
