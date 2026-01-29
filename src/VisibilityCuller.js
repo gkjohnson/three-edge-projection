@@ -47,7 +47,7 @@ function collectAllObjects( objects ) {
 
 // TODO: WebGPU or occlusion queries would let us accelerate this. Ideally would we "contract" the depth buffer by one pixel by
 // taking the lowest value from all surrounding pixels in order to avoid mesh misses.
-export class MeshVisibilityCuller {
+export class VisibilityCuller {
 
 	constructor( renderer, options = {} ) {
 
