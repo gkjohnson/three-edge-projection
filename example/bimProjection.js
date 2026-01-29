@@ -1,149 +1,25 @@
-// import * as THREE from 'three';
-// import { MeshBVH, SAH } from 'three-mesh-bvh';
-// import { ProjectionGenerator, VisibilityCuller } from '..';
-
-
-
-// // prettier-ignore
-// const githubUrl =
-// 	"https://thatopen.github.io/engine_fragment/resources/worker.mjs";
-// const fetchedUrl = await fetch(githubUrl);
-// const workerBlob = await fetchedUrl.blob();
-// const workerFile = new File([workerBlob], "worker.mjs", {
-// 	type: "text/javascript",
-// });
-// const workerUrl = URL.createObjectURL(workerFile);
-// const fragments = components.get(OBC.FragmentsManager);
-// fragments.init(workerUrl);
-
-// world.camera.controls.addEventListener("control", () =>
-// 	fragments.core.update(true),
-// );
-
-// // Remove z fighting
-// fragments.core.models.materials.list.onItemSet.add(({ value: material }) => {
-// 	if (!("isLodMaterial" in material && material.isLodMaterial)) {
-// 		material.polygonOffset = true;
-// 		material.polygonOffsetUnits = 1;
-// 		material.polygonOffsetFactor = Math.random();
-// 	}
-// });
-
-// async function loadModel(
-// 	url,
-// 	id = url,
-// 	raw = false,
-// 	transform = new THREE.Vector3(),
-// ) {
-// 	const fetched = await fetch(url);
-// 	const buffer = await fetched.arrayBuffer();
-
-// 	const model = await fragments.core.load(buffer, {
-// 		modelId: id,
-// 		camera: world.camera.three,
-// 		raw,
-// 	});
-
-// 	model.object.position.add(transform);
-// 	world.scene.three.add(model.object);
-// 	const now = performance.now();
-// 	await fragments.core.update(true);
-// 	const then = performance.now();
-// 	console.log(`Time taken: ${then - now}ms`);
-
-// 	return model;
-// }
-
-// const model = await loadModel("/school_arq.frag");
-
-// const clipper = components.get(OBC.Clipper);
-// clipper.createFromNormalAndCoplanarPoint(world, new THREE.Vector3(0, -1, 0), new THREE.Vector3(0, 1, 0));
-
-// const furnishingElementIdsRaw = await model.getItemsOfCategories([
-// 	/IFCFURNISHINGELEMENT/,
-// ]);
-// const furnishingElementIds = Object.values(furnishingElementIdsRaw).flat();
-
-// const allMeshes = [];
-// const material = new THREE.MeshBasicMaterial({
-// 	color: new THREE.Color(1, 0, 0),
-// 	opacity: 0.6,
-// 	transparent: true,
-// 	depthTest: false,
-// 	polygonOffset: true,
-// 	polygonOffsetUnits: 1,
-// 	polygonOffsetFactor: 0.1,
-// });
-
-// // Add picking meshes (deduplicating geometries to save memory)
-// // const idsWithGeometry = await model.getItemsIdsWithGeometry();
-// const allMeshesData = await model.getItemsGeometry(furnishingElementIds);
-
-// const geometries = new Map();
-
-// for (const itemId in allMeshesData) {
-// 	const meshData = allMeshesData[itemId];
-// 	const itemMeshes = [];
-// 	const itemIdInt = parseInt(itemId, 10);
-// 	for (const geomData of meshData) {
-// 		if (
-// 			!geomData.positions ||
-// 			!geomData.indices ||
-// 			!geomData.transform ||
-// 			!geomData.representationId
-// 		) {
-// 			continue;
-// 		}
-
-// 		const representationId = geomData.representationId;
-// 		if (!geometries.has(representationId)) {
-// 			const geometry = new THREE.BufferGeometry();
-// 			geometry.setAttribute(
-// 				"position",
-// 				new THREE.Float32BufferAttribute(geomData.positions, 3),
-// 			);
-// 			geometry.setIndex(Array.from(geomData.indices));
-// 			geometries.set(representationId, geometry);
-// 		}
-
-// 		const geometry = geometries.get(representationId);
-
-// 		const mesh = new THREE.Mesh(geometry, material);
-// 		mesh.userData.itemId = itemIdInt;
-// 		mesh.applyMatrix4(geomData.transform);
-// 		mesh.updateWorldMatrix(true, true);
-// 		itemMeshes.push(mesh);
-// 		allMeshes.push(mesh);
-// 	}
-// }
 import * as THREE from 'three';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { LDrawLoader } from 'three/examples/jsm/loaders/LDrawLoader.js';
-import { LDrawConditionalLineMaterial } from 'three/examples/jsm/materials/LDrawConditionalLineMaterial.js';
-import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
-import { ProjectionGenerator, VisibilityCuller } from '..';
 import { MeshBVH, SAH } from 'three-mesh-bvh';
-
 import * as OBC from '@thatopen/components';
+import { ProjectionGenerator, VisibilityCuller } from '..';
 
 
 const params = {
 	displayModel: true,
 	displayDrawThroughProjection: false,
-	includeIntersectionEdges: true,
+	includeIntersectionEdges: false,
 	rotate: () => {
 
 		group.quaternion.random();
-		group.position.set( 0, 0, 0 );
-		group.updateMatrixWorld( true );
+		group.position.set(0, 0, 0);
+		group.updateMatrixWorld(true);
 
 		const box = new THREE.Box3();
-		box.setFromObject( model, true );
-		box.getCenter( group.position ).multiplyScalar( - 1 );
-		group.position.y = Math.max( 0, - box.min.y ) + 1;
-		group.updateMatrixWorld( true );
+		box.setFromObject(group, true);
+		box.getCenter(group.position).multiplyScalar(- 1);
+		group.position.y = Math.max(0, - box.min.y) + 1;
+		group.updateMatrixWorld(true);
 
 		task = updateEdges();
 
@@ -158,89 +34,187 @@ const params = {
 const ANGLE_THRESHOLD = 50;
 // let needsRender = false;
 let gui;
-let model, projection, drawThroughProjection, group;
+let group, projection, drawThroughProjection;
 let outputContainer;
 let task = null;
 
 
-
 const components = new OBC.Components();
-const worlds = components.get( OBC.Worlds );
-const container = document.getElementById( "container" );
+const worlds = components.get(OBC.Worlds);
+const container = document.getElementById("container");
 
 const world = worlds.create();
 
-world.scene = new OBC.SimpleScene( components );
-world.renderer = new OBC.SimpleRenderer( components, container );
-world.camera = new OBC.OrthoPerspectiveCamera( components );
+world.scene = new OBC.SimpleScene(components);
+world.renderer = new OBC.SimpleRenderer(components, container);
+world.camera = new OBC.OrthoPerspectiveCamera(components);
 
 components.init();
 
 world.scene.setup();
 // world.camera.three.far = 10000;
 
-world.scene.three.add( new THREE.AxesHelper() );
+world.scene.three.add(new THREE.AxesHelper());
 
-outputContainer = document.getElementById( 'output' );
+outputContainer = document.getElementById('output');
 
 
 // load model
+
+
+
+// prettier-ignore
+const githubUrl =
+	"https://thatopen.github.io/engine_fragment/resources/worker.mjs";
+const fetchedUrl = await fetch(githubUrl);
+const workerBlob = await fetchedUrl.blob();
+const workerFile = new File([workerBlob], "worker.mjs", {
+	type: "text/javascript",
+});
+const workerUrl = URL.createObjectURL(workerFile);
+const fragments = components.get(OBC.FragmentsManager);
+fragments.init(workerUrl);
+
+world.camera.controls.addEventListener("control", () =>
+	fragments.core.update(true),
+);
+
+// Remove z fighting
+fragments.core.models.materials.list.onItemSet.add(({ value: material }) => {
+	if (!("isLodMaterial" in material && material.isLodMaterial)) {
+		material.polygonOffset = true;
+		material.polygonOffsetUnits = 1;
+		material.polygonOffsetFactor = Math.random();
+	}
+});
+
+async function loadModel(
+	url,
+	id = url,
+	raw = false,
+	transform = new THREE.Vector3(),
+) {
+	const fetched = await fetch(url);
+	const buffer = await fetched.arrayBuffer();
+
+	const model = await fragments.core.load(buffer, {
+		modelId: id,
+		camera: world.camera.three,
+		raw,
+	});
+
+	model.object.position.add(transform);
+	// world.scene.three.add(model.object);
+	const now = performance.now();
+	await fragments.core.update(true);
+	const then = performance.now();
+	console.log(`Time taken: ${then - now}ms`);
+
+	return model;
+}
+
+const model = await loadModel("/school_arq.frag");
+
+// group = new THREE.Mesh( new THREE.BoxGeometry( 1, 1, 1 ), new THREE.MeshBasicMaterial( { color: 0x00ff00 } ) );
+// group.position.y += 3;
+// world.scene.three.add( group );
+// group.rotation.set( Math.PI / 4, 0, Math.PI / 8 );
+
 group = new THREE.Group();
-world.scene.three.add( group );
+world.scene.three.add(group);
 
-window.ROOT = group;
+const material = new THREE.MeshLambertMaterial({
+	color: new THREE.Color("white"),
+});
 
-model = new THREE.Mesh( new THREE.BoxGeometry( 1, 1, 1 ), new THREE.MeshBasicMaterial( { color: 0x00ff00 } ) );
+// Add picking meshes (deduplicating geometries to save memory)
+const idsWithGeometry = await model.getItemsIdsWithGeometry();
+const allMeshesData = await model.getItemsGeometry(idsWithGeometry);
 
-model.rotation.set( Math.PI / 4, 0, Math.PI / 8 );
+const geometries = new Map();
+
+for (const itemId in allMeshesData) {
+	const meshData = allMeshesData[itemId];
+	const itemIdInt = parseInt(itemId, 10);
+	for (const geomData of meshData) {
+		if (
+			!geomData.positions ||
+			!geomData.indices ||
+			!geomData.transform ||
+			!geomData.representationId
+		) {
+			continue;
+		}
+
+		const representationId = geomData.representationId;
+		if (!geometries.has(representationId)) {
+			const geometry = new THREE.BufferGeometry();
+			geometry.setAttribute(
+				"position",
+				new THREE.Float32BufferAttribute(geomData.positions, 3),
+			);
+			geometry.setAttribute(
+				"normal",
+				new THREE.Float32BufferAttribute(geomData.normals, 3),
+			);
+			geometry.setIndex(Array.from(geomData.indices));
+			geometries.set(representationId, geometry);
+		}
+
+		const geometry = geometries.get(representationId);
+
+		const mesh = new THREE.Mesh(geometry, material);
+		mesh.userData.itemId = itemIdInt;
+		mesh.applyMatrix4(geomData.transform);
+		mesh.updateWorldMatrix(true, true);
+		group.add(mesh);
+	}
+}
 
 
 // initialize BVHs
-model.traverse( c => {
+group.traverse(c => {
 
-	if ( c.geometry && ! c.geometry.boundsTree ) {
+	if (c.geometry && !c.geometry.boundsTree) {
 
 		const elCount = c.geometry.index ? c.geometry.index.count : c.geometry.attributes.position.count;
-		c.geometry.groups.forEach( group => {
+		c.geometry.groups.forEach(group => {
 
-			if ( group.count === Infinity ) {
+			if (group.count === Infinity) {
 
 				group.count = elCount - group.start;
 
 			}
 
-		} );
+		});
 
-		c.geometry.boundsTree = new MeshBVH( c.geometry, { maxLeafSize: 1, strategy: SAH } );
+		c.geometry.boundsTree = new MeshBVH(c.geometry, { maxLeafSize: 1, strategy: SAH });
 
 	}
 
-} );
+});
 
 // center model
 const box = new THREE.Box3();
-box.setFromObject( model, true );
-box.getCenter( group.position ).multiplyScalar( - 1 );
-group.position.y = Math.max( 0, - box.min.y ) + 1;
-group.add( model );
-group.updateMatrixWorld( true );
+box.setFromObject(group, true);
 
 // create projection display mesh
-projection = new THREE.LineSegments( new THREE.BufferGeometry(), new THREE.LineBasicMaterial( { color: 0x030303, depthWrite: false } ) );
-drawThroughProjection = new THREE.LineSegments( new THREE.BufferGeometry(), new THREE.LineBasicMaterial( { color: 0xcacaca, depthWrite: false } ) );
+projection = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0x030303, depthWrite: false, depthTest: false }));
+drawThroughProjection = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0xcacaca, depthWrite: false }));
 drawThroughProjection.renderOrder = - 1;
-world.scene.three.add( projection, drawThroughProjection );
+world.scene.three.add(projection, drawThroughProjection);
 
 gui = new GUI();
-gui.add( params, 'rotate' );
-gui.add( params, 'regenerate' );
+gui.add(params, 'includeIntersectionEdges');
+gui.add(params, 'rotate');
+gui.add(params, 'regenerate');
 
-world.renderer.onBeforeUpdate.add( () => {
+world.renderer.onBeforeUpdate.add(() => {
 
-	if ( task ) {
+	if (task) {
 
 		const res = task.next();
-		if ( res.done ) {
+		if (res.done) {
 
 			task = null;
 
@@ -248,13 +222,13 @@ world.renderer.onBeforeUpdate.add( () => {
 
 	}
 
-	model.visible = params.displayModel;
+	group.visible = params.displayModel;
 	drawThroughProjection.visible = params.displayDrawThroughProjection;
 
-} );
+});
 
 
-function* updateEdges( runTime = 30 ) {
+function* updateEdges(runTime = 30) {
 
 	outputContainer.innerText = 'Generating...';
 
@@ -272,14 +246,14 @@ function* updateEdges( runTime = 30 ) {
 	generator.angleThreshold = ANGLE_THRESHOLD;
 	generator.includeIntersectionEdges = params.includeIntersectionEdges;
 
-	const collection = yield* generator.generate( model, {
-		visibilityCuller: new VisibilityCuller( world.renderer.three, { pixelsPerMeter: 0.1 } ),
-		onProgress: ( msg, tot, edges ) => {
+	const collection = yield* generator.generate(group, {
+		visibilityCuller: new VisibilityCuller(world.renderer.three, { pixelsPerMeter: 0.1 }),
+		onProgress: (msg, tot, edges) => {
 
 			outputContainer.innerText = msg;
-			if ( tot ) outputContainer.innerText += ' ' + ( 100 * tot ).toFixed( 1 ) + '%';
+			if (tot) outputContainer.innerText += ' ' + (100 * tot).toFixed(1) + '%';
 
-			if ( edges ) {
+			if (edges) {
 
 				projection.geometry.dispose();
 				projection.geometry = edges.getVisibleLineGeometry();
@@ -287,7 +261,7 @@ function* updateEdges( runTime = 30 ) {
 			}
 
 		},
-	} );
+	});
 	drawThroughProjection.geometry.dispose();
 	drawThroughProjection.geometry = collection.getHiddenLineGeometry();
 
@@ -298,9 +272,9 @@ function* updateEdges( runTime = 30 ) {
 
 	projection.geometry.dispose();
 	projection.geometry = geometry;
-	outputContainer.innerText = `Generation time: ${ trimTime.toFixed( 2 ) }ms`;
+	outputContainer.innerText = `Generation time: ${trimTime.toFixed(2)}ms`;
 
 }
 
-task = updateEdges();
+// task = updateEdges();
 
