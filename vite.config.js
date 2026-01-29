@@ -5,7 +5,13 @@ export default {
 
 	root: './example/',
 	base: '',
+	optimizeDeps: {
+		esbuildOptions: {
+			target: 'es2022',
+		},
+	},
 	build: {
+		target: 'es2022',
 		sourcemap: true,
 		outDir: './dist/',
 		minify: false,
