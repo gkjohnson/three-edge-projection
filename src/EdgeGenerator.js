@@ -37,6 +37,19 @@ export class EdgeGenerator {
 
 	*getEdgesGenerator( geometry, resultEdges = [] ) {
 
+		// handle arrays
+		if ( Array.isArray( geometry ) ) {
+
+			for ( let i = 0, l = geometry.length; i < l; i ++ ) {
+
+				yield* this.getEdgesGenerator( geometry[ i ], resultEdges );
+
+			}
+
+			return resultEdges;
+
+		}
+
 		const { projectionDirection, thresholdAngle, iterationTime } = this;
 		if ( geometry.isObject3D ) {
 
@@ -114,6 +127,19 @@ export class EdgeGenerator {
 	}
 
 	*getIntersectionEdgesGenerator( geometry, resultEdges = [] ) {
+
+		// handle arrays
+		if ( Array.isArray( geometry ) ) {
+
+			for ( let i = 0, l = geometry.length; i < l; i ++ ) {
+
+				yield* this.getIntersectionEdgesGenerator( geometry[ i ], resultEdges );
+
+			}
+
+			return resultEdges;
+
+		}
 
 		const { iterationTime } = this;
 		if ( geometry.isObject3D ) {

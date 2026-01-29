@@ -16,13 +16,14 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { LDrawLoader } from 'three/examples/jsm/loaders/LDrawLoader.js';
 import { LDrawConditionalLineMaterial } from 'three/examples/jsm/materials/LDrawConditionalLineMaterial.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
-import { ProjectionGenerator, VisibilityCuller } from '..';
+import { ProjectionGenerator, MeshVisibilityCuller } from '..';
 import { MeshBVH, SAH } from 'three-mesh-bvh';
 
 const params = {
 	displayModel: true,
 	displayDrawThroughProjection: false,
 	includeIntersectionEdges: true,
+	visibilityCullMeshes: false,
 	rotate: () => {
 
 		group.quaternion.random();
@@ -183,7 +184,8 @@ async function init() {
 	gui = new GUI();
 	gui.add( params, 'displayModel' ).onChange( () => needsRender = true );
 	gui.add( params, 'displayDrawThroughProjection' ).onChange( () => needsRender = true );
-	gui.add( params, 'includeIntersectionEdges' ).onChange( () => needsRender = true );
+	gui.add( params, 'includeIntersectionEdges' );
+	gui.add( params, 'visibilityCullMeshes' );
 	gui.add( params, 'rotate' );
 	gui.add( params, 'regenerate' ).onChange( () => needsRender = true );
 
@@ -204,7 +206,7 @@ async function init() {
 
 }
 
-function* updateEdges( runTime = 30 ) {
+async function* updateEdges( runTime = 30 ) {
 
 	outputContainer.innerText = 'Generating...';
 
@@ -222,8 +224,14 @@ function* updateEdges( runTime = 30 ) {
 	generator.angleThreshold = ANGLE_THRESHOLD;
 	generator.includeIntersectionEdges = params.includeIntersectionEdges;
 
-	const collection = yield* generator.generate( model, {
-		visibilityCuller: new VisibilityCuller( renderer, { pixelsPerMeter: 0.1 } ),
+	let input = [ model ];
+	if ( params.visibilityCullMeshes ) {
+
+		input = await new MeshVisibilityCuller( renderer, { pixelsPerMeter: 0.01 } ).cull( input );
+
+	}
+
+	const collection = yield* generator.generate( input, {
 		onProgress: ( msg, tot, edges ) => {
 
 			outputContainer.innerText = msg;

@@ -1,16 +1,31 @@
 export function getAllMeshes( scene ) {
 
-	let meshes = [];
-	scene.traverse( c => {
+	let arr;
+	if ( Array.isArray( scene ) ) {
 
-		if ( c.geometry && c.visible ) {
+		arr = scene;
 
-			meshes.push( c );
+	} else {
 
-		}
+		arr = [ scene ];
 
-	} );
+	}
 
-	return meshes;
+	const result = new Set();
+	for ( let i = 0, l = arr.length; i < l; i ++ ) {
+
+		arr[ i ].traverse( c => {
+
+			if ( c.geometry && c.visible ) {
+
+				result.add( c );
+
+			}
+
+		} );
+
+	}
+
+	return Array.from( result );
 
 }

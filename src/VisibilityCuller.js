@@ -10,6 +10,7 @@ import {
 	Mesh,
 	NoBlending,
 } from 'three';
+import { getAllMeshes } from './utils/getAllMeshes.js';
 
 // RGBA8 ID encoding - supports up to 16,777,215 objects (2^24 - 1)
 // ID 0 is valid, background is indicated by alpha = 0
@@ -28,23 +29,6 @@ function decodeId( buffer, index ) {
 
 }
 
-function collectAllObjects( objects ) {
-
-	const result = new Set();
-	objects.traverse( c => {
-
-		if ( c.isMesh ) {
-
-			result.add( c );
-
-		}
-
-	} );
-
-	return Array.from( result );
-
-}
-
 // TODO: WebGPU or occlusion queries would let us accelerate this. Ideally would we "contract" the depth buffer by one pixel by
 // taking the lowest value from all surrounding pixels in order to avoid mesh misses.
 export class VisibilityCuller {
@@ -60,7 +44,7 @@ export class VisibilityCuller {
 
 	async cull( objects ) {
 
-		objects = collectAllObjects( objects );
+		objects = getAllMeshes( objects );
 
 		const { renderer, pixelsPerMeter } = this;
 		const size = new Vector3();
@@ -162,8 +146,6 @@ export class VisibilityCuller {
 		idMesh.material.dispose();
 		target.dispose();
 
-
-		console.log( objects.length, visibleSet.size );
 		return Array.from( visibleSet );
 
 	}

@@ -30,7 +30,7 @@ More granular API with control over when edge trimming work happens.
 
 ```js
 const generator = new ProjectionGenerator();
-generator.generate( geometry );
+generator.generate( scene );
 
 let result = task.next();
 while ( ! result.done ) {
@@ -49,11 +49,21 @@ Simpler API with less control over when the work happens.
 
 ```js
 const generator = new ProjectionGenerator();
-const result = await generator.generateAsync( geometry );
+const result = await generator.generateAsync( scene );
 const mesh = new Mesh( result.getVisibleLineGeometry(), material );
 scene.add( mesh );
 ```
 
+**Visibility Culling**
+
+To visibility cull a scene before generation you can use MeshVisibilityCuller before running the projection step.
+
+```js
+const input = new MeshVisibilityCuller( renderer ).cull( scene );
+const result = await generator.generateAsync( scene );
+const mesh = new Mesh( result.getVisibleLineGeometry(), material );
+scene.add( mesh );
+```
 
 # API
 
@@ -95,7 +105,7 @@ Whether to generate edges representing the intersections between triangles.
 
 ```js
 *generate(
-	geometry: Object3D | BufferGeometry,
+	geometry: Object3D | BufferGeometry | Array<Object3D>,
 	options: {
 		onProgress: ( message: string ) => void,
 	}
@@ -111,7 +121,7 @@ Generate the edge geometry using a generator function.
 
 ```js
 generateAsync(
-	geometry: Object3D | BufferGeometry,
+	geometry: Object3D | BufferGeometry | Array<Object3D>,
 	options: {
 		onProgress: ( message: string ) => void,
 		signal: AbortSignal,
@@ -123,6 +133,34 @@ generateAsync(
 ```
 
 Generate the geometry with a promise-style API.
+
+## MeshVisibilityCuller
+
+Utility for determining visible geometry from a top down orthographic perspective. This can be run before performing projection generation to reduce the complexity of the operation at the cost of potentially missing small details.
+
+### .pixelsPerMeter
+
+```js
+pixelsPerMeter: number = 0.1
+```
+
+The size of a pixel on a single dimension. If this results in a texture larger than what the graphics context can provide then the rendering is tiled.
+
+### constructor
+
+```js
+constructor( renderer: WebGLRenderer, options = {} )
+```
+
+Constructor for the visibility culler that takes the renderer to use for culling.
+
+### .cull
+
+```js
+async cull( object: Object3D | Array<Object3D> ): Array<Object3D>
+```
+
+Returns the set of meshes that are visible within the given object.
 
 ## SilhouetteGenerator
 
