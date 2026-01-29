@@ -88,10 +88,6 @@ export class MeshVisibilityCuller {
 		const autoClear = renderer.autoClear;
 
 		// render ids
-		renderer.autoClear = false;
-		renderer.setClearColor( 0, 0 );
-		renderer.setRenderTarget( target );
-
 		const readBuffer = new Uint8Array( target.width * target.height * 4 );
 		const visibleSet = new Set();
 		const stepX = size.x / tilesX;
@@ -100,6 +96,7 @@ export class MeshVisibilityCuller {
 
 			for ( let y = 0; y < tilesY; y ++ ) {
 
+				// update camera
 				camera.left = box.min.x + stepX * x;
 				camera.bottom = box.min.z + stepY * y;
 
@@ -107,6 +104,11 @@ export class MeshVisibilityCuller {
 				camera.top = camera.bottom + stepY;
 
 				camera.updateProjectionMatrix();
+
+				// clear the camera
+				renderer.autoClear = false;
+				renderer.setClearColor( 0, 0 );
+				renderer.setRenderTarget( target );
 				renderer.clear();
 
 				for ( let i = 0; i < objects.length; i ++ ) {
@@ -119,6 +121,11 @@ export class MeshVisibilityCuller {
 					renderer.render( idMesh, camera );
 
 				}
+
+				// reset render state before async operation to avoid corruption
+				renderer.setClearColor( color, alpha );
+				renderer.setRenderTarget( renderTarget );
+				renderer.autoClear = autoClear;
 
 				const buffer = await renderer.readRenderTargetPixelsAsync( target, 0, 0, target.width, target.height, readBuffer );
 
@@ -136,11 +143,6 @@ export class MeshVisibilityCuller {
 			}
 
 		}
-
-		// reset render state
-		renderer.setClearColor( color, alpha );
-		renderer.setRenderTarget( renderTarget );
-		renderer.autoClear = autoClear;
 
 		// dispose of intermediate values
 		idMesh.material.dispose();
