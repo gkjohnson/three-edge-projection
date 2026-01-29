@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>three-edge-projection - Projected Edge Generation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+    <style type="text/css">
+        html, body {
+            padding: 0;
+            margin: 0;
+            overflow: hidden;
+			font-family: monospace;
+			background-color: #111;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        #output {
+            color: white;
+            position: absolute;
+            left: 10px;
+            bottom: 10px;
+            white-space: pre;
+        }
+
+        #info {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            color: white;
+            font-family: monospace;
+            text-align: center;
+            padding: 5px 0;
+        }
+
+		a {
+			color: white;
+		}
+    </style>
+  <script type="module" crossorigin src="./assets/floorProjection-C9wl_X0N.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/PlanarIntersectionGenerator-ChmpyYEB.js">
+  <link rel="modulepreload" crossorigin href="./assets/meshopt_decoder.module-CoStjsgL.js">
+  <link rel="modulepreload" crossorigin href="./assets/ProjectionGenerator-DFBBZv3o.js">
+  <link rel="modulepreload" crossorigin href="./assets/SilhouetteGenerator-BthsVxbf.js">
+</head>
+<body>
+	<div id="info">
+		Floor plan silhouette and edge projection from <a href="https://sketchfab.com/3d-models/3d-floor-plan-of-home-apartment-office-layout-506ed4379b5940a793e652c1b7c0d836">Sketchfab model</a>.
+	</div>
+	<div id="output">loading...</div>
+</body>
+</html>

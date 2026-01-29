@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>three-edge-projection - Projected Edge Generation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+    <style type="text/css">
+        html, body {
+            padding: 0;
+            margin: 0;
+            overflow: hidden;
+			font-family: monospace;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        #output {
+            color: #333;
+            position: absolute;
+            left: 10px;
+            bottom: 10px;
+            white-space: pre;
+        }
+
+        #info {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            color: #333;
+            font-family: monospace;
+            text-align: center;
+            padding: 5px 0;
+        }
+    </style>
+  <script type="module" crossorigin src="./assets/edgeProjection-NwguL0M-.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/PlanarIntersectionGenerator-ChmpyYEB.js">
+  <link rel="modulepreload" crossorigin href="./assets/meshopt_decoder.module-CoStjsgL.js">
+  <link rel="modulepreload" crossorigin href="./assets/ProjectionGenerator-DFBBZv3o.js">
+</head>
+<body>
+	<div id="info">
+		Accelerated geometry edge projection and clipping onto<br/>the XZ plane for orthographic vector views.
+	</div>
+	<div id="output"></div>
+</body>
+</html>
