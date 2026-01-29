@@ -7,10 +7,8 @@ import {
 	Line3,
 	Box3,
 	Raycaster,
-	MathUtils,
-	Points,
 } from 'three';
-import { MeshBVH, SAH } from 'three-mesh-bvh';
+import { MeshBVH, SAH, acceleratedRaycast } from 'three-mesh-bvh';
 import { isYProjectedLineDegenerate } from './utils/triangleLineUtils.js';
 import { overlapsToLines } from './utils/overlapUtils.js';
 import { EdgeGenerator } from './EdgeGenerator.js';
@@ -139,12 +137,25 @@ class ProjectedEdgeCollector {
 		if ( this.intersectionApproach ) {
 
 			// TODO: use objects bvh for scene to accelerate raycasts
-			// TODO: book keep the splits separately in order to avoid duplicate clipping
+			// TODO: cache inverse matrices to help speed things up
 
-			const splits = [];
-			const hits = [];
+			meshes.forEach( c => {
 
+				c.geometry.boundsTree = bvhs.get( c.geometry );
+				c.raycast = acceleratedRaycast;
+
+			} );
+
+			const results = {};
+			time = performance.now();
 			for ( let i0 = 0, l = edgesBvh.lines.length; i0 < l; i0 ++ ) {
+
+				if ( performance.now() - time > iterationTime ) {
+
+					yield;
+					time = performance.now();
+
+				}
 
 				// get the projected line
 				const e0 = edgesBvh.lines[ i0 ];
@@ -165,7 +176,6 @@ class ProjectedEdgeCollector {
 				_box.min.y = - 1e5;
 
 				// reset the splits and
-				splits.length = 0;
 				edgesBvh.shapecast( {
 
 					intersectsBounds( b ) {
@@ -178,11 +188,14 @@ class ProjectedEdgeCollector {
 
 						for ( let i1 = offset, l = offset + count; i1 < l; i1 ++ ) {
 
-							if ( i0 === i1 ) {
+							if ( i1 <= i0 ) {
 
 								continue;
 
 							}
+
+							if ( ! results[ i0 ] ) results[ i0 ] = [];
+							if ( ! results[ i1 ] ) results[ i1 ] = [];
 
 							// get the projected line
 							const e1 = edgesBvh.lines[ i1 ];
@@ -204,7 +217,8 @@ class ProjectedEdgeCollector {
 							const dist = _line0.distanceSqToLine3( _line1, _point0, _point1 );
 							if ( dist < 1e-5 ) {
 
-								splits.push( _line0.closestPointToPointParameter( _point1 ) );
+								results[ i0 ].push( _line0.closestPointToPointParameter( _point1 ) );
+								results[ i1 ].push( _line1.closestPointToPointParameter( _point1 ) );
 
 							}
 
@@ -214,59 +228,12 @@ class ProjectedEdgeCollector {
 
 				} );
 
-				// sort the splits
-				splits.push( 0, 1 );
-				splits.sort( ( a, b ) => a - b );
+			}
 
-				// iterate over splits
-				_raycaster.firstHitOnly = true;
-				for ( let i = 0; i < splits.length - 1; i ++ ) {
+			for ( let i = 0, l = edgesBvh.lines.length; i < l; i ++ ) {
 
-					const s0 = splits[ i ];
-					const s1 = splits[ i + 1 ];
-					if ( s0 === s1 ) {
-
-						continue;
-
-					}
-
-					// set up the raycaster to project check the middle of the line
-					const middle = ( s0 + s1 ) / 2;
-					e0.at( middle, _raycaster.ray.origin );
-					_raycaster.ray.origin.y += 1e4;
-					_raycaster.far = 1e4;
-					_raycaster.ray.direction.set( 0, - 1, 0 );
-
-					// perform the raycasting check
-					let visible = true;
-					for ( let m = 0, lm = meshes.length; m < lm; m ++ ) {
-
-						const mesh = meshes[ m ];
-						const bvh = bvhs.get( mesh.geometry );
-						hits.length = 0;
-						bvh.raycastObject3D( mesh, _raycaster, hits );
-						if ( hits.length > 0 ) {
-
-							visible = false;
-
-						}
-
-					}
-
-					// if it's visible then save it
-					if ( visible ) {
-
-						e0.at( s0, _line.start );
-						e0.at( s1, _line.end );
-
-						visibleEdges.push( new Float32Array( [
-							_line.start.x, 0, _line.start.z,
-							_line.end.x, 0, _line.end.z,
-						] ) );
-
-					}
-
-				}
+				const line = edgesBvh.lines[ i ];
+				pushFromSplits( line, results[ i ] || [], meshes, bvhs, visibleEdges, objectsBVH );
 
 			}
 
@@ -421,27 +388,6 @@ export class ProjectionGenerator {
 
 		yield;
 
-		// cull non-visible lines using depth map
-		if ( lineVisibilityCuller ) {
-
-			onProgress( 'Culling non-visible lines' );
-
-			let finished = false;
-			lineVisibilityCuller.cull( scene, edges ).then( res => {
-
-				edges = res;
-				finished = true;
-
-			} );
-
-			while ( ! finished ) {
-
-				yield;
-
-			}
-
-		}
-
 		const collector = new ProjectedEdgeCollector( scene );
 		collector.iterationTime = iterationTime;
 
@@ -455,6 +401,68 @@ export class ProjectionGenerator {
 		} );
 
 		return collector;
+
+	}
+
+}
+
+function pushFromSplits( line, splits, meshes, bvhs, target, objectsBVH ) {
+
+	const hits = [];
+
+	// sort the splits
+	splits.push( 0, 1 );
+	splits.sort( ( a, b ) => a - b );
+
+	// iterate over splits
+	_raycaster.firstHitOnly = true;
+	for ( let i = 0; i < splits.length - 1; i ++ ) {
+
+		const s0 = splits[ i ];
+		const s1 = splits[ i + 1 ];
+		if ( s0 === s1 ) {
+
+			continue;
+
+		}
+
+		// set up the raycaster to project check the middle of the line
+		const middle = ( s0 + s1 ) / 2;
+		line.at( middle, _raycaster.ray.origin );
+		_raycaster.ray.origin.y += 1e4;
+		_raycaster.far = 1e4;
+		_raycaster.ray.direction.set( 0, - 1, 0 );
+
+		// perform the raycasting check
+		let visible = true;
+		for ( let m = 0, lm = meshes.length; m < lm; m ++ ) {
+
+			const mesh = meshes[ m ];
+			const bvh = bvhs.get( mesh.geometry );
+			hits.length = 0;
+
+			bvh.raycastObject3D( mesh, _raycaster, hits );
+			if ( hits.length > 0 ) {
+
+				visible = false;
+				break;
+
+			}
+
+		}
+
+		// if it's visible then save it
+		if ( visible ) {
+
+			line.at( s0, _line.start );
+			line.at( s1, _line.end );
+
+			target.push( new Float32Array( [
+				_line.start.x, 0, _line.start.z,
+				_line.end.x, 0, _line.end.z,
+			] ) );
+
+		}
 
 	}
 
