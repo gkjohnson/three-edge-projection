@@ -333,37 +333,11 @@ export class ProjectionGenerator {
 	*generate( scene, options ) {
 
 		const { iterationTime, angleThreshold, includeIntersectionEdges } = this;
-		const {
-			onProgress = () => {},
-			visibilityCuller = null,
-			lineVisibilityCuller = null,
-		} = options;
+		const { onProgress = () => {} } = options;
 
 		if ( scene.isBufferGeometry ) {
 
 			scene = new Mesh( scene );
-
-		}
-
-		if ( visibilityCuller ) {
-
-			onProgress( 'Culling non-visible geometry' );
-
-			let finished = false;
-			visibilityCuller.cull( scene ).then( res => {
-
-				// TODO: the functions should be able to handle an array of objects
-				scene = new Scene();
-				scene.children = res;
-				finished = true;
-
-			} );
-
-			while ( ! finished ) {
-
-				yield;
-
-			}
 
 		}
 

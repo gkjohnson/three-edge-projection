@@ -28,10 +28,10 @@ function decodeId( buffer, index ) {
 
 }
 
-function collectAllObjects( objects ) {
+function collectAllObjects( object ) {
 
 	const result = new Set();
-	objects.traverse( c => {
+	object.traverse( c => {
 
 		if ( c.isMesh ) {
 
@@ -58,9 +58,9 @@ export class MeshVisibilityCuller {
 
 	}
 
-	async cull( objects ) {
+	async cull( object ) {
 
-		objects = collectAllObjects( objects );
+		object = collectAllObjects( object );
 
 		const { renderer, pixelsPerMeter } = this;
 		const size = new Vector3();
@@ -74,7 +74,7 @@ export class MeshVisibilityCuller {
 
 		// get the bounds of the image
 		box.makeEmpty();
-		objects.forEach( o => {
+		object.forEach( o => {
 
 			box.expandByObject( o );
 
@@ -125,9 +125,9 @@ export class MeshVisibilityCuller {
 				camera.updateProjectionMatrix();
 				renderer.clear();
 
-				for ( let i = 0; i < objects.length; i ++ ) {
+				for ( let i = 0; i < object.length; i ++ ) {
 
-					const object = objects[ i ];
+					const object = object[ i ];
 					idMesh.matrixWorld.copy( object.matrixWorld );
 					idMesh.geometry = object.geometry;
 
@@ -145,7 +145,7 @@ export class MeshVisibilityCuller {
 					if ( buffer[ i + 3 ] === 0 ) continue;
 
 					const id = decodeId( buffer, i );
-					visibleSet.add( objects[ id ] );
+					visibleSet.add( object[ id ] );
 
 				}
 
@@ -162,8 +162,6 @@ export class MeshVisibilityCuller {
 		idMesh.material.dispose();
 		target.dispose();
 
-
-		console.log( objects.length, visibleSet.size );
 		return Array.from( visibleSet );
 
 	}

@@ -124,6 +124,27 @@ generateAsync(
 
 Generate the geometry with a promise-style API.
 
+## MeshVisibilityCuller
+
+Utility for determining visible geometry from a top down orthographic perspective. This can be run before performing projection generation to reduce the complexity of the operation at the cost of potentially missing small details.
+
+### .pixelsPerMeter
+
+```js
+pixelsPerMeter: number = 0.1
+```
+
+The size of a pixel on a single dimension. If this results in a texture larger than what the graphics context can provide then the rendering is tiled.
+
+### constructor
+
+```js
+constructor( renderer: WebGLRenderer, options = {} )
+```
+
+Constructor for the visibility culler that takes the renderer to use for culling.
+
+
 ## SilhouetteGenerator
 
 Used for generating a projected silhouette of a geometry using the [clipper2-js](https://www.npmjs.com/package/clipper2-js) project. Performing these operations can be extremely slow with more complex geometry and not always yield a stable result.
