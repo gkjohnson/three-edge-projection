@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { MeshBVH, SAH } from 'three-mesh-bvh';
 import * as OBC from '@thatopen/components';
-import { ProjectionGenerator, VisibilityCuller } from '..';
+import { ProjectionGenerator, MeshVisibilityCuller } from '..';
 
 
 const params = {
@@ -234,7 +234,7 @@ const projectedMaterial = new THREE.MeshLambertMaterial({
 });
 
 
-function* updateEdges(runTime = 30) {
+async function* updateEdges(runTime = 30) {
 
 	outputContainer.innerText = 'Generating...';
 
@@ -248,7 +248,7 @@ function* updateEdges(runTime = 30) {
 	const tempBbox = new THREE.Box3();
 
 	for (const child of allMeshes.children) {
-		
+
 		// INSERT_YOUR_CODE
 		// Compute the bounding box in world space for this mesh
 		tempBbox.setFromObject(child);
@@ -280,8 +280,8 @@ function* updateEdges(runTime = 30) {
 	generator.includeIntersectionEdges = params.includeIntersectionEdges;
 	console.log(generator.includeIntersectionEdges);
 
-	const collection = yield* generator.generate(group, {
-		visibilityCuller: new VisibilityCuller(world.renderer.three, { pixelsPerMeter: 0.1 }),
+	let input = await new MeshVisibilityCuller(world.renderer.three, { pixelsPerMeter: 0.01 }).cull( group );
+	const collection = yield* generator.generate(input, {
 		onProgress: (msg, tot, edges) => {
 
 			outputContainer.innerText = msg;
