@@ -144,6 +144,13 @@ constructor( renderer: WebGLRenderer, options = {} )
 
 Constructor for the visibility culler that takes the renderer to use for culling.
 
+### .cull
+
+```js
+async cull( object: Object3D ): Array<Mesh>
+```
+
+Returns the set of meshes that are visible within the given object.
 
 ## SilhouetteGenerator
 

@@ -3,8 +3,7 @@ import {
 	Vector3,
 	BufferAttribute,
 	Mesh,
-	Scene,
-	Line3,
+=	Line3,
 	Box3,
 	Raycaster,
 } from 'three';
@@ -62,7 +61,7 @@ class ProjectedEdgeCollector {
 		this.visibleEdges = [];
 		this.hiddenEdges = [];
 		this.iterationTime = 30;
-		this.intersectionApproach = false;
+		this.lineIntersectionStrategy = false;
 
 	}
 
@@ -134,7 +133,7 @@ class ProjectedEdgeCollector {
 		// construct bvh
 		const edgesBvh = new LineObjectsBVH( edges, { maxLeafSize: 2, strategy: SAH } );
 
-		if ( this.intersectionApproach ) {
+		if ( this.lineIntersectionStrategy ) {
 
 			// TODO: use objects bvh for scene to accelerate raycasts
 			// TODO: cache inverse matrices to help speed things up
@@ -217,6 +216,7 @@ class ProjectedEdgeCollector {
 							const dist = _line0.distanceSqToLine3( _line1, _point0, _point1 );
 							if ( dist < 1e-5 ) {
 
+								// NOTE: only the second point from distanceSqToLine3 is valid due to a bug in r182 implementation
 								results[ i0 ].push( _line0.closestPointToPointParameter( _point1 ) );
 								results[ i1 ].push( _line1.closestPointToPointParameter( _point1 ) );
 
@@ -230,6 +230,7 @@ class ProjectedEdgeCollector {
 
 			}
 
+			// save out all the lines
 			for ( let i = 0, l = edgesBvh.lines.length; i < l; i ++ ) {
 
 				const line = edgesBvh.lines[ i ];
