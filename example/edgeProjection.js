@@ -16,7 +16,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { LDrawLoader } from 'three/examples/jsm/loaders/LDrawLoader.js';
 import { LDrawConditionalLineMaterial } from 'three/examples/jsm/materials/LDrawConditionalLineMaterial.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
-import { ProjectionGenerator, MeshVisibilityCuller, LineVisibilityCuller } from '..';
+import { ProjectionGenerator, MeshVisibilityCuller } from '..';
 import { MeshBVH, SAH } from 'three-mesh-bvh';
 
 const params = {
@@ -223,8 +223,7 @@ function* updateEdges( runTime = 30 ) {
 	generator.includeIntersectionEdges = params.includeIntersectionEdges;
 
 	const collection = yield* generator.generate( model, {
-		visibilityCuller: new MeshVisibilityCuller( renderer, { pixelsPerMeter: 0.1 } ),
-		lineVisibilityCuller: new LineVisibilityCuller( renderer, { pixelsPerMeter: 0.1 } ),
+		// visibilityCuller: new MeshVisibilityCuller( renderer, { pixelsPerMeter: 0.01 } ),
 		onProgress: ( msg, tot, edges ) => {
 
 			outputContainer.innerText = msg;
