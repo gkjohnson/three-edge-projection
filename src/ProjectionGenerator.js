@@ -3,7 +3,7 @@ import {
 	Vector3,
 	BufferAttribute,
 	Mesh,
-=	Line3,
+	Line3,
 	Box3,
 	Raycaster,
 } from 'three';
