@@ -4,14 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [0.0.4] - Unreleaesd
+## [0.0.4] - 2025.01.29
 ### Changed
 - ProjectionGenerator now returns an object with functions for extracting edges.
 
 ### Added
 - Ability to extract hidden edges in addition to visible edges.
-- Optimizations to increase generation.
+- Optimizations to increase generation speed.
 - Remove requirement to merge geometry ahead of time.
+- A "MeshVisibilityCuller" class that can be run to help reduce the number of meshes that need to be processed.
 
 ### Removed
 - ProjectionGeneratorWorker
