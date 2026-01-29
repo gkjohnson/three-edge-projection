@@ -31,7 +31,7 @@ function decodeId( buffer, index ) {
 
 // TODO: WebGPU or occlusion queries would let us accelerate this. Ideally would we "contract" the depth buffer by one pixel by
 // taking the lowest value from all surrounding pixels in order to avoid mesh misses.
-export class VisibilityCuller {
+export class MeshVisibilityCuller {
 
 	constructor( renderer, options = {} ) {
 
