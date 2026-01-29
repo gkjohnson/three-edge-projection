@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 - Ability to extract hidden edges in addition to visible edges.
-- Optimizations to increase generation.
+- Optimizations to increase generation speed.
 - Remove requirement to merge geometry ahead of time.
 - A "MeshVisibilityCuller" class that can be run to help reduce the number of meshes that need to be processed.
 
