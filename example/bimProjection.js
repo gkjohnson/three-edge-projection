@@ -92,7 +92,6 @@ async function loadModel(
 	url,
 	id = url,
 	raw = false,
-	transform = new THREE.Vector3(),
 ) {
 	const fetched = await fetch(url);
 	const buffer = await fetched.arrayBuffer();
@@ -103,7 +102,6 @@ async function loadModel(
 		raw,
 	});
 
-	model.object.position.add(transform);
 	// world.scene.three.add(model.object);
 	const now = performance.now();
 	await fragments.core.update(true);
@@ -115,13 +113,15 @@ async function loadModel(
 
 const model = await loadModel("/school_arq.frag");
 
-// group = new THREE.Mesh( new THREE.BoxGeometry( 1, 1, 1 ), new THREE.MeshBasicMaterial( { color: 0x00ff00 } ) );
-// group.position.y += 3;
-// world.scene.three.add( group );
-// group.rotation.set( Math.PI / 4, 0, Math.PI / 8 );
+const clipper = components.get(OBC.Clipper);
+const planeId = clipper.createFromNormalAndCoplanarPoint(world, new THREE.Vector3(0, -1, 0), new THREE.Vector3(0, 1, 0));
+const plane = clipper.list.get(planeId);
 
 group = new THREE.Group();
 world.scene.three.add(group);
+
+const allMeshes = new THREE.Group();
+world.scene.three.add(allMeshes);
 
 const material = new THREE.MeshLambertMaterial({
 	color: new THREE.Color("white"),
@@ -167,13 +167,12 @@ for (const itemId in allMeshesData) {
 		mesh.userData.itemId = itemIdInt;
 		mesh.applyMatrix4(geomData.transform);
 		mesh.updateWorldMatrix(true, true);
-		group.add(mesh);
+		allMeshes.add(mesh);
 	}
 }
 
-
 // initialize BVHs
-group.traverse(c => {
+allMeshes.traverse(c => {
 
 	if (c.geometry && !c.geometry.boundsTree) {
 
@@ -199,7 +198,7 @@ const box = new THREE.Box3();
 box.setFromObject(group, true);
 
 // create projection display mesh
-projection = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0x030303, depthWrite: false, depthTest: false }));
+projection = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0x030303, depthTest: false }));
 drawThroughProjection = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0xcacaca, depthWrite: false }));
 drawThroughProjection.renderOrder = - 1;
 world.scene.three.add(projection, drawThroughProjection);
@@ -227,10 +226,44 @@ world.renderer.onBeforeUpdate.add(() => {
 
 });
 
+const projectedMaterial = new THREE.MeshLambertMaterial({
+	color: new THREE.Color("red"),
+	transparent: true,
+	opacity: 0.5,
+	visible: false,
+});
+
 
 function* updateEdges(runTime = 30) {
 
 	outputContainer.innerText = 'Generating...';
+
+
+	const previous = [...group.children];
+	for (const child of previous) {
+		group.remove(child);
+		child.geometry = null;
+	}
+
+	const tempBbox = new THREE.Box3();
+
+	for (const child of allMeshes.children) {
+		
+		// INSERT_YOUR_CODE
+		// Compute the bounding box in world space for this mesh
+		tempBbox.setFromObject(child);
+
+		// Assume the clipping plane is horizontal and defined by params.clippingHeight
+		// Only add meshes whose bbox.min.y is below the clipping height, i.e., at least partially under
+		if (tempBbox.min.y > plane.three.constant) {
+			continue;
+		}
+
+		const newMesh = new THREE.Mesh(child.geometry, projectedMaterial);
+		newMesh.applyMatrix4(child.matrixWorld);
+
+		group.add(newMesh);
+	}
 
 	// dispose the geometry
 	projection.geometry.dispose();
@@ -245,6 +278,7 @@ function* updateEdges(runTime = 30) {
 	generator.iterationTime = runTime;
 	generator.angleThreshold = ANGLE_THRESHOLD;
 	generator.includeIntersectionEdges = params.includeIntersectionEdges;
+	console.log(generator.includeIntersectionEdges);
 
 	const collection = yield* generator.generate(group, {
 		visibilityCuller: new VisibilityCuller(world.renderer.three, { pixelsPerMeter: 0.1 }),
