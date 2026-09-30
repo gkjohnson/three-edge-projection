@@ -37,6 +37,8 @@ npm install github:@gkjohnson/three-edge-projection
 
 See [API.md](./API.md) for full API documentation.
 
+The same documentation is also available on the [docs site](https://gkjohnson.github.io/tools/docs/three-edge-projection/).
+
 # Use
 
 **Generator**
