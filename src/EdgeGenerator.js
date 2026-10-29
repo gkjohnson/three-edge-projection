@@ -177,7 +177,7 @@ export class EdgeGenerator {
 				const geometry = mesh.geometry;
 				if ( ! bvhs.has( geometry ) ) {
 
-					const bvh = geometry.boundsTree || new MeshBVH( geometry, { maxLeafSize: 1 } );
+					const bvh = geometry.boundsTree || new MeshBVH( geometry, { targetLeafSize: 1 } );
 					bvhs.set( geometry, bvh );
 
 				}
@@ -233,7 +233,7 @@ export class EdgeGenerator {
 			let bvh;
 			if ( geometry.isBufferGeometry ) {
 
-				bvh = geometry.boundsTree || new MeshBVH( geometry, { maxLeafSize: 1 } );
+				bvh = geometry.boundsTree || new MeshBVH( geometry, { targetLeafSize: 1 } );
 
 			} else {
 

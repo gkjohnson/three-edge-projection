@@ -148,7 +148,7 @@ async function init() {
 
 			} );
 
-			c.geometry.boundsTree = new MeshBVH( c.geometry, { maxLeafSize: 1, strategy: SAH } );
+			c.geometry.boundsTree = new MeshBVH( c.geometry, { targetLeafSize: 1, strategy: SAH } );
 
 		}
 
