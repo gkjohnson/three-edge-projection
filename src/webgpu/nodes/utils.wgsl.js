@@ -1,5 +1,4 @@
-import { wgslTagFn } from '../lib/nodes/WGSLTagFnNode.js';
-import { bvhNodeBoundsStruct } from '../lib/wgsl/structs.wgsl.js';
+import { wgslTagFn, bvhNodeBoundsStruct } from 'three-mesh-bvh/webgpu';
 
 // Transform all 8 corners of a BVH bounding box by the given matrix and
 // return the world-space AABB that encloses the result.

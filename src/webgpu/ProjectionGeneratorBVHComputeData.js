@@ -1,8 +1,6 @@
 import { BackSide, DoubleSide, FrontSide } from 'three';
 import { StructTypeNode } from 'three/webgpu';
-import { BVHComputeData } from './lib/BVHComputeData.js';
-import { wgslTagFn } from './lib/nodes/WGSLTagFnNode.js';
-import { bvhNodeBoundsStruct } from './lib/wgsl/structs.wgsl.js';
+import { BVHComputeData, wgslTagFn, bvhNodeBoundsStruct } from 'three-mesh-bvh/webgpu';
 import { transformBVHBounds } from './nodes/utils.wgsl.js';
 import { constants as overlapConstants } from './nodes/common.wgsl.js';
 import { getProjectedOverlapRange, isLineTriangleEdge, trimToBeneathTriPlane } from './nodes/overlapFunctions.wgsl.js';
@@ -24,10 +22,10 @@ const edgeLineShapeStruct = new StructTypeNode( {
 const projectionTransformStruct = new StructTypeNode( {
 	matrixWorld: 'mat4x4f',
 	inverseMatrixWorld: 'mat4x4f',
-	nodeOffset: 'uint',
 	visible: 'uint',
 	side: 'int',
 	_alignment0: 'uint',
+	_alignment1: 'uint',
 }, 'ProjectionTransformStruct' );
 
 // Projection-generator-specific BVHComputeData that only requires position
@@ -76,7 +74,7 @@ export class ProjectionGeneratorBVHComputeData extends BVHComputeData {
 		}
 
 		const transformBufferU32 = new Uint32Array( targetBuffer );
-		transformBufferU32[ writeOffset * projectionTransformStruct.getLength() + 34 ] = sideValue;
+		transformBufferU32[ writeOffset * projectionTransformStruct.getLength() + 33 ] = sideValue;
 
 	}
 

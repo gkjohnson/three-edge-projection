@@ -1,4 +1,4 @@
-import { wgslTagFn } from '../lib/nodes/WGSLTagFnNode.js';
+import { wgslTagFn } from 'three-mesh-bvh/webgpu';
 import { constants } from './common.wgsl.js';
 import { TriWGSL, LineWGSL, PlaneWGSL } from './primitives.js';
 import { clipResultStruct } from './structs.wgsl.js';

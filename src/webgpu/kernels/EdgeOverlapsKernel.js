@@ -1,7 +1,6 @@
 import { globalId, storage, uniform } from 'three/tsl';
-import { wgslTagFn } from '../lib/nodes/WGSLTagFnNode.js';
+import { wgslTagFn, proxyFn } from 'three-mesh-bvh/webgpu';
 import { ComputeKernel } from '../utils/ComputeKernel.js';
-import { proxyFn } from '../lib/nodes/NodeProxy.js';
 import { StorageBufferAttribute } from 'three/webgpu';
 import { edgeStruct } from '../nodes/structs.wgsl.js';
 

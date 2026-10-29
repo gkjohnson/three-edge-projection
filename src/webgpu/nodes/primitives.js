@@ -1,5 +1,5 @@
 import { StructTypeNode } from 'three/webgpu';
-import { wgslTagFn } from '../lib/nodes/WGSLTagFnNode.js';
+import { wgslTagFn } from 'three-mesh-bvh/webgpu';
 
 const lineStruct = new StructTypeNode( {
 	start: 'vec3',

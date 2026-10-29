@@ -1,6 +1,6 @@
 import { IndirectStorageBufferAttribute } from 'three/webgpu';
 import { storage, globalId } from 'three/tsl';
-import { wgslTagFn } from '../lib/nodes/WGSLTagFnNode.js';
+import { wgslTagFn } from 'three-mesh-bvh/webgpu';
 import { ComputeKernel } from '../utils/ComputeKernel.js';
 
 export class ZeroOutBufferKernel extends ComputeKernel {
