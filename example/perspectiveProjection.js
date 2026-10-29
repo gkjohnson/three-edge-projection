@@ -14,6 +14,7 @@ import {
 import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { ProjectionGenerator as ProjectionGeneratorCompute } from 'three-edge-projection/webgpu';
 import { ProjectionGenerator } from 'three-edge-projection';
@@ -69,6 +70,7 @@ async function init() {
 
 	const gltf = await new GLTFLoader()
 		.setMeshoptDecoder( MeshoptDecoder )
+		.setDRACOLoader( new DRACOLoader() )
 		.loadAsync( 'https://raw.githubusercontent.com/gkjohnson/3d-demo-data/main/models/nasa-m2020/Perseverance.glb' );
 	model = gltf.scene;
 

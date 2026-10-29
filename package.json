@@ -63,7 +63,7 @@
     "three": ">=0.186.1",
     "three-mesh-bvh": ">=0.9.17",
     "typescript-eslint": "^8.48.1",
-    "vite": "^6.2.2",
+    "vite": "^8.3.5",
     "vitest": "^3.0.0",
     "web-ifc": "^0.0.77"
   }
